@@ -6,7 +6,7 @@ import { listTags, arrowTags } from "./tags.js";
 let labelArry = []; //标签数组
 let arrowArry = []; //箭头数组
 let chooseMesh = 0;
-
+let cityCenter = 0;
 // 拾取函数
 //event:鼠标坐标
 //mesh:网格体组
@@ -92,7 +92,8 @@ function choose(event, mesh, level) {
       arrowLabel.position.copy(pos.set(x - 100000, y - 100000, 230000));
       label.position.copy(pos.set(x + 300000, y, 220000));
     }
-    // provinceCenter = chooseMesh.userData.center;
+    cityCenter = chooseMesh.userData.center;
+    console.log("cityCenter", cityCenter);
     //边缘高光、、、、、、、、、、、、、
     // let a = selectEmissive(chooseMesh);
     // composer.addPass(a);
@@ -100,4 +101,4 @@ function choose(event, mesh, level) {
     chooseMesh = 0;
   }
 }
-export { choose, chooseMesh };
+export { choose, chooseMesh, cityCenter };

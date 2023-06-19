@@ -1,56 +1,77 @@
 <template>
   <div
-    id="container"
+    class="box"
     style="width: 100vw; height: 100vh; overflow: hidden; position: relative"
   >
-    <img
-      src="../../public/img/背景@2x.png"
-      alt=""
-      style="
-        opacity: 1;
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        z-index: -1;
-      "
-    />
-    <video
-      class="video-container"
-      ref="myVideo"
-      autoplay="autoplay"
-      muted
-      controls
-      style="width: 100%; height: 100%; object-fit: fill; opacity: 1"
-    >
-      <source src="../../public/img/开场动画.mp4" />
-    </video>
-    <div id="hello" style="visibility: hidden; z-index: 5; position: absolute">
-      <div class="label">
-        <span>4G高清执法记录仪：1</span>
-        <div class="line1"><span>一体化布控球：2</span></div>
-        <div class="line2"><span>手持单兵：3</span></div>
-        <div class="line3"><span>4G车载监控终端：4</span></div>
-        <div class="angle"></div>
+    <div id="container" style="width: 100%; height: 100%; position: absolute">
+      <!-- 背景图片 -->
+      <img
+        src="../../public/img/背景@2x.png"
+        alt=""
+        style="
+          opacity: 1;
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          z-index: -1;
+        "
+      />
+      <!-- 开场视频 -->
+      <video
+        class="video-container"
+        ref="myVideo"
+        autoplay="autoplay"
+        muted
+        controls
+        style="width: 100%; height: 100%; object-fit: fill; opacity: 1"
+      >
+        <source src="../../public/img/开场动画.mp4" />
+      </video>
+      <!-- 设备信息 -->
+      <div
+        id="hello"
+        style="visibility: hidden; z-index: 5; position: absolute"
+      >
+        <div class="label">
+          <span>4G高清执法记录仪：1</span>
+          <div class="line1"><span>一体化布控球：2</span></div>
+          <div class="line2"><span>手持单兵：3</span></div>
+          <div class="line3"><span>4G车载监控终端：4</span></div>
+          <div class="angle"></div>
+        </div>
       </div>
+      <!-- 定位图标 -->
+      <img
+        id="arrow"
+        src="../../public/img/定位.png"
+        alt=""
+        style="position: absolute; z-index: 9; visibility: hidden"
+      />
+      <!-- canvas threejs画布 -->
     </div>
-    <img
-      id="arrow"
-      src="../../public/img/定位.png"
-      alt=""
-      style="position: absolute; z-index: 9; visibility: hidden"
-    />
+    <!-- 高德地图 -->
+    <div
+      id="Amap"
+      style="
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        visibility: hidden;
+        z-index: -10;
+      "
+    ></div>
   </div>
 </template>
 
 <script>
+// eslint-disable-next-line no-unused-vars
+import AMapLoader from "@amap/amap-jsapi-loader";
 import { renderer } from "@/BaseModel/RenderLoop";
-import { choose, chooseMesh } from "@/BaseModel/utils/choose.js";
+import { choose, chooseMesh, cityCenter } from "@/BaseModel/utils/choose.js";
 import { labelRenderer } from "@/BaseModel/utils/tags";
 import gsap from "gsap";
 import { camera, controls } from "@/BaseModel/RenderCamera";
-// eslint-disable-next-line no-unused-vars
 import { scene } from "@/BaseModel/scene";
-// eslint-disable-next-line no-unused-vars
 import { MeshGroup, lineGroup, anhuiMesh, level } from "@/BaseModel/scene/mesh";
 import { fontGroup } from "@/BaseModel/utils/generateFont";
 export default {
@@ -60,7 +81,30 @@ export default {
       level2: level,
     };
   },
+  methods: {
+    //初始化高德地图
+    initMap(cityCenter) {
+      AMapLoader.load({
+        key: "d1bd5fd8efed0733ce7a296af76eb4c8", // 申请好的Web端开发者Key，首次调用 load 时必填
+        version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
+        plugins: [""], // 需要使用的的插件列表，如比例尺'AMap.Scale'等
+      })
+        .then((AMap) => {
+          this.map = new AMap.Map("Amap", {
+            //设置地图容器id
+            viewMode: "3D", //是否为3D地图模式
+            zoom: 11, //初始化地图级别
+            center: [cityCenter[0], cityCenter[1]], //初始化地图中心点位置
+          });
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    },
+  },
   mounted() {
+    console.log("this外层", this);
+    const self = this;
     const myVideo = this.$refs.myVideo;
     const chooseEvent = (e) => {
       choose(e, MeshGroup, level);
@@ -75,7 +119,7 @@ export default {
           tween1.kill();
           tween1 = null;
           myVideo.parentNode.removeChild(myVideo);
-          //单机地图显示标签
+          //绑定单击地图点击事件
           window.addEventListener("click", chooseEvent);
           //设置画布图层的位置与层级
           document.getElementById("container").appendChild(renderer.domElement);
@@ -86,7 +130,7 @@ export default {
             .getElementById("container")
             .appendChild(labelRenderer.domElement); //插入生成好的label标签到html中去
           labelRenderer.domElement.style.zIndex = 3;
-          //地图由远拉近
+          //地图由近拉远
           let tween2 = gsap.to(camera.position, {
             z: 5000000,
             duration: 1,
@@ -96,8 +140,31 @@ export default {
               tween2 = null;
             },
           });
-          //双击地图跳转安徽地图
-          window.addEventListener("dblclick", () => {
+          function chooseCity() {
+            if (chooseMesh) {
+              //相机拉远
+              let tween1 = gsap.to(camera.position, {
+                z: 50000000,
+                duration: 1,
+                ease: "none",
+                onComplete: () => {
+                  tween1.kill();
+                  tween1 = null;
+                  console.log("selfffffffff", self);
+                  self.initMap(cityCenter);
+                  const dom = document.getElementById("Amap");
+                  dom.style.visibility = "visible";
+                  dom.style.zIndex = 50;
+                },
+              });
+              //
+            } else {
+              return;
+            }
+          }
+
+          //安徽地图方法
+          function chooseAnhui() {
             //隐藏箭头
             const arrowDom = document.getElementById("arrow");
             arrowDom.style.visibility = "hidden";
@@ -164,23 +231,28 @@ export default {
                       tween3.kill();
                     },
                   });
-                  //移除中国地图的监听事件
+                  //移除中国地图的单击监听事件
                   window.removeEventListener("click", chooseEvent);
-                  this.level2 = 2;
+                  //移除中国地图的双击事件
+                  window.removeEventListener("dblclick", chooseAnhui);
+                  this.level2 = 2; //修改level的值用于拾取事件中修改标签的大小
                   let anhui = anhuiMesh(this.level2);
                   const anhuiChoose = (e) => {
                     choose(e, anhui, this.level2);
                   };
-                  //绑定安徽地图的监听事件
+                  //绑定安徽地图的单击监听事件，拾取网格体
                   window.addEventListener("click", anhuiChoose);
-                  // camera.position.set(13124121.88, 3776272.11, 638806.68);
-                  // controls.target.set(13030745, 3771289, 20000);
+                  //绑定安徽地图的双击监听事件，跳转到高德地图
+                  window.addEventListener("dblclick", chooseCity);
                 },
               });
             } else {
               return;
             }
-          });
+          }
+          //绑定双击中国地图事件跳转到安徽地图
+
+          window.addEventListener("dblclick", chooseAnhui);
         },
       });
     });

@@ -145,9 +145,14 @@ loaderfile.load("/BaseModel/123.json", async (data) => {
       depth: 360000,
       bevelEnabled: false,
     });
-    // shapeMesh.userData.center = item.properties.center;
+
     //生成具有网格体的数组
     let shapeMesh = generateMap(shapeGeometry);
+    //为网格体添加中心坐标属性center
+    shapeMesh.userData.center = lon2xy(
+      item.properties.center[0],
+      item.properties.center[1]
+    );
     MeshGroup.add(shapeMesh);
     //地名文字
     let xy = lon2xy(item.properties.centroid[0], item.properties.centroid[1]); //每个网格体自带的中心点数据
@@ -203,6 +208,8 @@ function anhuiMesh(level) {
         bevelEnabled: false,
       });
       let shapeMesh = generateAnhuiMap(ShapeGeometry);
+      //为网格体添加中心坐标属性center
+      shapeMesh.userData.center = item.properties.center;
       anhuiMeshgroup.add(shapeMesh);
       //地名文字
       let xy = lon2xy(item.properties.centroid[0], item.properties.centroid[1]); //每个网格体自带的中心点数据
