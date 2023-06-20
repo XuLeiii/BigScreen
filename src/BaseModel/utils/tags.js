@@ -34,8 +34,10 @@ function listTags(level) {
   const label = new CSS3DSprite(dom);
   if (level === 1) {
     label.scale.set(5500, 5500, 5500);
-  } else {
+  } else if (level === 2) {
     label.scale.set(1000, 1000, 1000);
+  } else {
+    label.scale.set(500, 500, 500);
   }
   return label;
 }
@@ -47,8 +49,10 @@ function arrowTags(level) {
   const label = new CSS3DSprite(dom);
   if (level === 1) {
     label.scale.set(3000, 3000, 3000);
-  } else {
+  } else if (level === 2) {
     label.scale.set(500, 500, 500);
+  } else {
+    label.scale.set(150, 150, 150);
   }
   return label;
 }

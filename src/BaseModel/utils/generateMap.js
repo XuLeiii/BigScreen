@@ -29,10 +29,14 @@ function generateMap(shapeGeometry) {
   const upMaterial = new THREE.MeshLambertMaterial({
     color: 0x00a2ff,
     map: texture,
+    opacity: 1,
+    transparent: true,
     side: THREE.DoubleSide,
   });
   const sideMaterial = new THREE.MeshLambertMaterial({
     color: 0x00a2ff,
+    opacity: 1,
+    transparent: true,
     side: THREE.DoubleSide,
   });
   const shapeMesh = new THREE.Mesh(shapeGeometry, [upMaterial, sideMaterial]);

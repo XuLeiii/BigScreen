@@ -67,18 +67,33 @@
 // eslint-disable-next-line no-unused-vars
 import AMapLoader from "@amap/amap-jsapi-loader";
 import { renderer } from "@/BaseModel/RenderLoop";
+// eslint-disable-next-line no-unused-vars
 import { choose, chooseMesh, cityCenter } from "@/BaseModel/utils/choose.js";
 import { labelRenderer } from "@/BaseModel/utils/tags";
 import gsap from "gsap";
-import { camera, controls } from "@/BaseModel/RenderCamera";
+// eslint-disable-next-line no-unused-vars
+import { camera, controls, restrictOp } from "@/BaseModel/RenderCamera";
 import { scene } from "@/BaseModel/scene";
-import { MeshGroup, lineGroup, anhuiMesh, level } from "@/BaseModel/scene/mesh";
-import { fontGroup } from "@/BaseModel/utils/generateFont";
+import {
+  MeshGroup,
+  lineGroup,
+  anhuiMesh,
+  anhuiMeshgroup,
+  anhuiLinegroup,
+  cityMesh,
+  level,
+} from "@/BaseModel/scene/mesh";
+import { fontGroup, fontAnhuiGroup } from "@/BaseModel/utils/generateFont";
 export default {
   name: "HelloWorld",
   data() {
     return {
       level2: level,
+      isRestrict: true,
+      anhui: null,
+      anhuiChoose: null,
+      city: null,
+      cityMeshChoose: null,
     };
   },
   methods: {
@@ -103,8 +118,9 @@ export default {
     },
   },
   mounted() {
-    console.log("this外层", this);
     const self = this;
+    const canvasDom = renderer.domElement;//threejs 画布
+    canvasDom.style.opacity = 1;
     const myVideo = this.$refs.myVideo;
     const chooseEvent = (e) => {
       choose(e, MeshGroup, level);
@@ -130,48 +146,95 @@ export default {
             .getElementById("container")
             .appendChild(labelRenderer.domElement); //插入生成好的label标签到html中去
           labelRenderer.domElement.style.zIndex = 3;
-          //地图由近拉远
+          //相机由远拉近
+          //禁止相机限制
+          restrictOp(!this.isRestrict);
           let tween2 = gsap.to(camera.position, {
-            z: 5000000,
+            z: 500000000,
             duration: 1,
             ease: "none",
             onComplete: () => {
               tween2.kill();
               tween2 = null;
+              //启用相机限制
+              restrictOp(this.isRestrict);
             },
           });
+          //双击安徽地图事件
           function chooseCity() {
             if (chooseMesh) {
-              //相机拉远
-              let tween1 = gsap.to(camera.position, {
-                z: 50000000,
+              //相机拉近
+              let tween1 = gsap.to([camera.position, canvasDom.style], {
+                z: 10000000,
+                opacity: 0,
                 duration: 1,
                 ease: "none",
                 onComplete: () => {
                   tween1.kill();
                   tween1 = null;
-                  console.log("selfffffffff", self);
-                  self.initMap(cityCenter);
-                  const dom = document.getElementById("Amap");
-                  dom.style.visibility = "visible";
-                  dom.style.zIndex = 50;
+                  // self.initMap(cityCenter);
+                  // const dom = document.getElementById("Amap");
+                  // dom.style.visibility = "visible";
+                  // dom.style.zIndex = 50;
+                  anhuiMeshgroup.traverse((item) => {
+                    if (item.type === "Mesh") {
+                      item.geometry.dispose();
+                      item.material[0].dispose();
+                      item.material[1].dispose();
+                    }
+                  });
+                  scene.remove(anhuiMeshgroup);
+                  //清空线框
+                  anhuiLinegroup.traverse((item) => {
+                    if (item.type === "Mesh") {
+                      item.geometry.dispose();
+                      item.material.dispose();
+                    }
+                  });
+                  scene.remove(anhuiLinegroup);
+                  //清空字体
+                  fontAnhuiGroup.traverse((item) => {
+                    if (item.type === "Mesh") {
+                      item.geometry.dispose();
+                      item.material[0].dispose();
+                      item.material[1].dispose();
+                    }
+                  });
+                  scene.remove(fontAnhuiGroup);
+                  const tagarr = document.getElementsByClassName("tag");
+                  while (tagarr.length > 0) {
+                    tagarr[0].remove();
+                  }
+
+                  camera.position.set(13124121.88, 3776272.11, 20000000); //调整相机位置在省份正前方
+                  controls.target.set(13030745, 3771289, 20000); //调整相机指向到省份中心
+                  self.city = cityMesh(this.level2);
+                  self.cityMeshChoose = (e) => {
+                    choose(e, self.city, this.level2);
+                  };
+                  canvasDom.style.opacity = 1;
                 },
               });
-              //
+              this.level2 = 3;
+
+              document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
+              document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
+              window.removeEventListener("click", self.anhuiChoose); //移除安徽地图的单击事件
+              window.removeEventListener("dblclick", chooseCity); //移除安徽地图的双击事件
+              window.addEventListener("click", self.cityMeshChoose); //绑定市级地图单击事件
             } else {
               return;
             }
           }
-
           //安徽地图方法
           function chooseAnhui() {
-            //隐藏箭头
-            const arrowDom = document.getElementById("arrow");
-            arrowDom.style.visibility = "hidden";
+            document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
+            document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
             if (chooseMesh) {
-              //中国地图远离动画
-              const tween1 = gsap.to(camera.position, {
+              //相机拉近
+              const tween1 = gsap.to([camera.position, canvasDom.style], {
                 z: 250000000,
+                opacity: 0,
                 duration: 1,
                 ease: "none",
                 onComplete: function () {
@@ -205,45 +268,21 @@ export default {
                   while (tagarr.length > 0) {
                     tagarr[0].remove();
                   }
-                  //隐藏设备信息标签
-                  document.getElementById("hello").style.visibility = "hidden";
-                  // scene.remove(labelgroup);
                   tween1.kill();
-                  //安徽地图拉近动画
-                  const tween2 = gsap.to(camera.position, {
-                    x: 13124121.88,
-                    y: 3776272.11,
-                    z: 638806.68,
-                    duration: 1,
-                    ease: "none",
-                    onComplete: function () {
-                      tween2.kill();
-                    },
-                  });
-                  //更改相机的目标点位置动画
-                  const tween3 = gsap.to(controls.target, {
-                    x: 13030745,
-                    y: 3771289,
-                    z: 20000,
-                    duration: 1,
-                    ease: "none",
-                    onComplete: function () {
-                      tween3.kill();
-                    },
-                  });
+                  canvasDom.style.opacity = 1; //画布恢复
+                  camera.position.set(13124121.88, 3776272.11, 50000000); //调整相机位置再省份正前方
+                  controls.target.set(13030745, 3771289, 20000); //调整相机指向到省份中心
                   //移除中国地图的单击监听事件
                   window.removeEventListener("click", chooseEvent);
                   //移除中国地图的双击事件
                   window.removeEventListener("dblclick", chooseAnhui);
                   this.level2 = 2; //修改level的值用于拾取事件中修改标签的大小
-                  let anhui = anhuiMesh(this.level2);
-                  const anhuiChoose = (e) => {
-                    choose(e, anhui, this.level2);
+                  self.anhui = anhuiMesh(this.level2);
+                  self.anhuiChoose = (e) => {
+                    choose(e, self.anhui, this.level2);
                   };
-                  //绑定安徽地图的单击监听事件，拾取网格体
-                  window.addEventListener("click", anhuiChoose);
-                  //绑定安徽地图的双击监听事件，跳转到高德地图
-                  window.addEventListener("dblclick", chooseCity);
+                  window.addEventListener("click", self.anhuiChoose); //绑定安徽地图的单击监听事件，拾取网格体。
+                  window.addEventListener("dblclick", chooseCity); //绑定安徽地图的双击监听事件，下钻市区。
                 },
               });
             } else {
@@ -251,7 +290,6 @@ export default {
             }
           }
           //绑定双击中国地图事件跳转到安徽地图
-
           window.addEventListener("dblclick", chooseAnhui);
         },
       });

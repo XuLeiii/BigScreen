@@ -1,8 +1,12 @@
 import * as THREE from "three";
 import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils";
 // eslint-disable-next-line no-unused-vars
-import { generateFont, generateAnhuiFont } from "../utils/generateFont";
-import { generateMap, generateAnhuiMap } from "../utils/generateMap";
+import {
+  generateFont,
+  generateAnhuiFont,
+  generateCityFont,
+} from "../utils/generateFont";
+import { generateMap } from "../utils/generateMap";
 import { lon2xy } from "../utils/math";
 import { scene } from ".";
 
@@ -22,7 +26,7 @@ loaderfile.load("/BaseModel/中华人民共和国.json", async (data) => {
     }
     item.geometry.coordinates[0][0].forEach((val) => {
       let xy = lon2xy(val[0], val[1]);
-      lineArry.push(xy.x, xy.y, 380000);
+      lineArry.push(xy.x, xy.y, 420000);
     });
     const lineGeometry = new THREE.BufferGeometry();
     const vertices = new Float32Array(lineArry);
@@ -58,7 +62,7 @@ loaderfile.load("/BaseModel/123.json", async (data) => {
         const shape = new THREE.Shape(pointArry);
         shapeArr.push(shape);
         const shapeGeometry = new THREE.ExtrudeGeometry(shapeArr, {
-          depth: 360000,
+          depth: 400000,
           bevelEnabled: false,
         });
         //设置uv并贴图
@@ -142,7 +146,7 @@ loaderfile.load("/BaseModel/123.json", async (data) => {
     const shape = new THREE.Shape(pointArry); //传入矢量空间点坐标,生成二维形状平面。
     shapeArr.push(shape);
     const shapeGeometry = new THREE.ExtrudeGeometry(shapeArr, {
-      depth: 360000,
+      depth: 400000,
       bevelEnabled: false,
     });
 
@@ -163,12 +167,12 @@ loaderfile.load("/BaseModel/123.json", async (data) => {
 
 //安徽
 const anhuiMeshgroup = new THREE.Group(); //模型组
+const anhuiLinegroup = new THREE.Group(); //线框组
 function anhuiMesh(level) {
   level = 2;
   console.log(level);
-  const linegroup = new THREE.Group(); //线框组
   //线框
-  loaderfile.load("/BaseModel/安徽省线框.json", async (data) => {
+  loaderfile.load("/BaseModel/安徽省.json", async (data) => {
     data.features.forEach(async (item) => {
       let pointArr = [];
       if (item.geometry.type === "Polygon") {
@@ -187,12 +191,12 @@ function anhuiMesh(level) {
         color: 0x67cde2, //线条颜色
       });
       const line = new THREE.LineLoop(geometry, material); //首尾顶点连线，轮廓闭合
-      linegroup.add(line);
+      anhuiLinegroup.add(line);
     });
-    scene.add(linegroup);
+    scene.add(anhuiLinegroup);
   });
   //模型
-  loaderfile.load("/BaseModel/安徽省线框.json", async (data) => {
+  loaderfile.load("/BaseModel/安徽省.json", async (data) => {
     data.features.forEach(async (item) => {
       let vector2Arr = [];
       let shapeArr = [];
@@ -207,7 +211,7 @@ function anhuiMesh(level) {
         depth: 40000,
         bevelEnabled: false,
       });
-      let shapeMesh = generateAnhuiMap(ShapeGeometry);
+      let shapeMesh = generateMap(ShapeGeometry);
       //为网格体添加中心坐标属性center
       shapeMesh.userData.center = item.properties.center;
       anhuiMeshgroup.add(shapeMesh);
@@ -221,5 +225,75 @@ function anhuiMesh(level) {
   });
   return anhuiMeshgroup;
 }
+//
+const cityMeshgroup = new THREE.Group();
+const cityLineGroup = new THREE.Group();
+function cityMesh(level) {
+  level = 2;
+  console.log(level);
+  //模型
+  loaderfile.load("/BaseModel/合肥市.json", async (data) => {
+    data.features.forEach(async (item) => {
+      let vector2Arr = [];
+      let shapeArr = [];
+      const coordinatesArr = item.geometry.coordinates[0][0];
+      await coordinatesArr.forEach((item) => {
+        let xy = lon2xy(item[0], item[1]);
+        vector2Arr.push(new THREE.Vector2(xy.x, xy.y));
+      });
+      const shape = new THREE.Shape(vector2Arr);
+      shapeArr.push(shape);
+      const ShapeGeometry = new THREE.ExtrudeGeometry(shapeArr, {
+        depth: 40000,
+        bevelEnabled: false,
+      });
+      let shapeMesh = generateMap(ShapeGeometry);
+      //为网格体添加中心坐标属性center
+      shapeMesh.userData.center = item.properties.center;
+      cityMeshgroup.add(shapeMesh);
+      //地名文字
+      let xy = lon2xy(item.properties.centroid[0], item.properties.centroid[1]); //每个网格体自带的中心点数据
+      console.log("xy", xy);
+      let pos = new THREE.Vector3(xy.x, xy.y, 40800);
+      generateCityFont(item.properties.name, pos);
+      scene.add(cityMeshgroup);
+    });
+  });
+  //线框
+  loaderfile.load("/BaseModel/合肥市.json", async (data) => {
+    data.features.forEach(async (item) => {
+      let pointArr = [];
+      if (item.geometry.type === "Polygon") {
+        item.geometry.coordinates = [item.geometry.coordinates];
+      }
+      const coordinatesArr = item.geometry.coordinates[0][0];
+      await coordinatesArr.forEach((item) => {
+        let xy = lon2xy(item[0], item[1]);
+        pointArr.push(xy.x, xy.y, 40800);
+      });
+      const geometry = new THREE.BufferGeometry(); //创建一个Buffer类型几何体对象
+      const vertices = new Float32Array(pointArr);
+      const attribue = new THREE.BufferAttribute(vertices, 3); //3个为一组，表示一个顶点的xyz坐标
+      geometry.attributes.position = attribue;
+      const material = new THREE.LineBasicMaterial({
+        color: 0x67cde2, //线条颜色
+      });
+      const line = new THREE.LineLoop(geometry, material); //首尾顶点连线，轮廓闭合
+      cityLineGroup.add(line);
+    });
+    scene.add(cityLineGroup);
+  });
+  return cityMeshgroup;
+}
 
-export { lineGroup, MeshGroup, anhuiMesh, anhuiMeshgroup, level };
+export {
+  lineGroup,
+  MeshGroup,
+  anhuiMesh,
+  anhuiMeshgroup,
+  anhuiLinegroup,
+  cityMesh,
+  cityMeshgroup,
+  cityLineGroup,
+  level,
+};

@@ -53,8 +53,11 @@ function choose(event, mesh, level) {
     if (level === 1) {
       label.position.copy(pos.set(x + 400000, y + 10000, 220000));
       arrowLabel.position.copy(pos.set(x, y, 125000));
-    } else {
+    } else if (level === 2) {
       label.position.copy(pos.set(x + 80000, y, 40000));
+      arrowLabel.position.copy(pos.set(x, y, 40000));
+    } else {
+      label.position.copy(pos.set(x + 40000, y, 40000));
       arrowLabel.position.copy(pos.set(x, y, 40000));
     }
     scene.add(arrowLabel);

@@ -1,14 +1,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-// import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-// import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-// import { scene } from "./scene";
+
 //1.相机
 const camera = new THREE.PerspectiveCamera(
-  70,
+  1,
   window.innerWidth / window.innerHeight,
   0.1,
-  250000000
+  5000000000
 );
 // camera.position.set(300, 300, 300);
 // camera.lookAt(0, 0, 0);
@@ -30,13 +28,27 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(11610512.75, 4571117.8125, 0);
-// controls.maxAzimuthAngle = Math.PI / 2;
-// controls.minAzimuthAngle = -Math.PI / 2;
-// controls.minDistance = 2500000;
-// controls.maxDistance = 9000000;
+// controls.enablePan = false;//禁用鼠标右键
+//操作限制
+function restrictOp(bol) {
+  if (bol) {
+    //左右角度限制
+    controls.maxAzimuthAngle = Math.PI / 6;
+    controls.minAzimuthAngle = -Math.PI / 6;
+    //垂直旋转
+    controls.minPolarAngle = Math.PI / 3;
+    controls.maxPolarAngle = (Math.PI / 6) * 4;
+    // //缩放距离限制
+    // controls.minDistance = 2500000;
+    // controls.maxDistance = 9000000;
+  } else {
+    controls.minDistance = -Infinity;
+    controls.maxDistance = Infinity;
+  }
+}
 window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 });
-export { camera, renderer, controls };
+export { camera, renderer, controls, restrictOp };

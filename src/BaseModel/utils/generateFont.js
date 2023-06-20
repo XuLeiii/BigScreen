@@ -5,7 +5,7 @@ import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 //传入要生成的字和字体的位置
 let fontGroup = new THREE.Group();
 let fontAnhuiGroup = new THREE.Group();
-
+let cityFontGroup = new THREE.Group();
 /**
  * 生成地图上省会名字的网格体
  * @param {String} fontContent 文字名称
@@ -16,7 +16,6 @@ function generateFont(fontContent, fontPosition) {
   textLoader.load("/Fonts/DengXian_Bold.json", function (font) {
     let text = new TextGeometry(fontContent, {
       font: font,
-
       size: 100000,
       height: 60000,
     });
@@ -56,4 +55,32 @@ function generateAnhuiFont(fontContent, fontPosition) {
   });
 }
 
-export { generateFont, fontGroup, fontAnhuiGroup, generateAnhuiFont };
+function generateCityFont(fontContent, fontPosition) {
+  const textLoader = new FontLoader();
+  textLoader.load("/Fonts/DengXian_Bold.json", function (font) {
+    let text = new TextGeometry(fontContent, {
+      font: font,
+      size: 4000,
+      height: 5000,
+    });
+    let textmaterial1 = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+    });
+    let textmaterial2 = new THREE.MeshBasicMaterial({
+      color: 0x0070ff,
+    });
+    text.translate(-8000, 0, 0);
+    let textMesh = new THREE.Mesh(text, [textmaterial1, textmaterial2]);
+    textMesh.position.copy(fontPosition);
+    cityFontGroup.add(textMesh);
+    return cityFontGroup;
+  });
+}
+export {
+  generateFont,
+  fontGroup,
+  cityFontGroup,
+  fontAnhuiGroup,
+  generateAnhuiFont,
+  generateCityFont,
+};
