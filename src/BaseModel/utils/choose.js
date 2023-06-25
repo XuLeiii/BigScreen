@@ -24,6 +24,7 @@ function choose(event, mesh, level) {
     }
     arrowArry[0].visible = false;
   }
+  console.log("调用了choose");
   //1.获取当前鼠标的坐标
   let Sx = event.clientX;
   let Sy = event.clientY;
@@ -96,7 +97,7 @@ function choose(event, mesh, level) {
       label.position.copy(pos.set(x + 300000, y, 220000));
     }
     cityCenter = chooseMesh.userData.center;
-    console.log("cityCenter", cityCenter);
+    // console.log("cityCenter", cityCenter);
     //边缘高光、、、、、、、、、、、、、
     // let a = selectEmissive(chooseMesh);
     // composer.addPass(a);

@@ -8,6 +8,7 @@ function render() {
   labelRenderer.render(scene, camera);
   requestAnimationFrame(render);
   // composer.render();
+  // console.log(camera.position);
 }
 render();
 

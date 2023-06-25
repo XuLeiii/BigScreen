@@ -8,10 +8,9 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   5000000000
 );
-// camera.position.set(300, 300, 300);
-// camera.lookAt(0, 0, 0);
-camera.position.set(11610512.75, 4571117.8125, 270000000);
 
+camera.position.set(11610512.75,1071117.8125, 270000000);
+// camera.position.set(0,0, 0);
 //2.渲染器
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -29,8 +28,10 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(11610512.75, 4571117.8125, 0);
 // controls.enablePan = false;//禁用鼠标右键
-//操作限制
-function restrictOp(bol) {
+//视角操作限制
+//bol：是否启用限制
+//level:地图层级
+function restrictOp(bol, level) {
   if (bol) {
     //左右角度限制
     controls.maxAzimuthAngle = Math.PI / 6;
@@ -38,11 +39,24 @@ function restrictOp(bol) {
     //垂直旋转
     controls.minPolarAngle = Math.PI / 3;
     controls.maxPolarAngle = (Math.PI / 6) * 4;
-    // //缩放距离限制
-    // controls.minDistance = 2500000;
-    // controls.maxDistance = 9000000;
+    //缩放距离限制
+    if (level === 1) {
+      console.log("国级限制");
+      controls.minDistance = 250000000;
+      controls.maxDistance = 600000000;
+    } else if (level === 2) {
+      console.log("省级限制");
+      controls.minDistance = 10000000;
+      controls.maxDistance = 100000000;
+    } else {
+      console.log("市级限制");
+      controls.minDistance = 8000000;
+      controls.maxDistance = 80000000;
+      return;
+    }
   } else {
-    controls.minDistance = -Infinity;
+    console.log("禁止限制");
+    controls.minDistance = 0;
     controls.maxDistance = Infinity;
   }
 }

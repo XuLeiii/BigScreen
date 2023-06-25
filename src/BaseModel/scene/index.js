@@ -2,7 +2,7 @@ import * as THREE from "three";
 // import { box3Compute } from "../utils/box3Compute.js";
 import {
   fontGroup,
-  fontAnhuiGroup,
+  provinceFontGroup,
   cityFontGroup,
 } from "../utils/generateFont.js";
 import { lineGroup, MeshGroup } from "./mesh.js";
@@ -49,7 +49,8 @@ scene.add(
 
 console.log("MeshGroup", MeshGroup);
 //4.添加网格体s
-scene.add(lineGroup, MeshGroup, fontAnhuiGroup, cityFontGroup);
+
+scene.add(lineGroup, MeshGroup, provinceFontGroup, cityFontGroup);
 // scene.add(chinaFace);
 scene.add(fontGroup);
 export { scene };

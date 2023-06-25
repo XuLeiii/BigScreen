@@ -13,7 +13,7 @@
           width: 100%;
           height: 100%;
           position: absolute;
-          z-index: -1;
+          z-index: -2;
         "
       />
       <!-- 开场视频 -->
@@ -23,7 +23,13 @@
         autoplay="autoplay"
         muted
         controls
-        style="width: 100%; height: 100%; object-fit: fill; opacity: 1"
+        style="
+          width: 100%;
+          height: 100%;
+          object-fit: fill;
+          opacity: 1;
+          z-index: 0;
+        "
       >
         <source src="../../public/img/开场动画.mp4" />
       </video>
@@ -60,43 +66,109 @@
         z-index: -10;
       "
     ></div>
+    <button
+      @click="goBack()"
+      style="
+        position: absolute;
+        margin: 30px 0px 0px 50px;
+        width: 100px;
+        height: 35px;
+        font-size: 18px;
+        z-index: 2;
+      "
+    >
+      返回上一级
+    </button>
   </div>
 </template>
 
 <script>
-// eslint-disable-next-line no-unused-vars
+import gsap from "gsap";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import { renderer } from "@/BaseModel/RenderLoop";
+import { labelRenderer } from "@/BaseModel/utils/tags";
+import { scene } from "@/BaseModel/scene";
+import {
+  fontGroup,
+  provinceFontGroup,
+  cityFontGroup,
+} from "@/BaseModel/utils/generateFont";
 // eslint-disable-next-line no-unused-vars
 import { choose, chooseMesh, cityCenter } from "@/BaseModel/utils/choose.js";
-import { labelRenderer } from "@/BaseModel/utils/tags";
-import gsap from "gsap";
-// eslint-disable-next-line no-unused-vars
 import { camera, controls, restrictOp } from "@/BaseModel/RenderCamera";
-import { scene } from "@/BaseModel/scene";
 import {
   MeshGroup,
   lineGroup,
-  anhuiMesh,
-  anhuiMeshgroup,
-  anhuiLinegroup,
+  countryMesh,
+  provinceMesh,
+  provinceMeshgroup,
+  provinceLinegroup,
   cityMesh,
-  level,
+  cityMeshgroup,
+  cityLineGroup,
 } from "@/BaseModel/scene/mesh";
-import { fontGroup, fontAnhuiGroup } from "@/BaseModel/utils/generateFont";
 export default {
   name: "HelloWorld",
   data() {
     return {
-      level2: level,
-      isRestrict: true,
-      anhui: null,
-      anhuiChoose: null,
+      canvasDom: renderer.domElement,
+      MapLevel: 1, //地图层级
+      isRestrict: true, //是否开启相机限制
       city: null,
-      cityMeshChoose: null,
+      clcikTimer: null,
+      handleclick: null,
+      handerDblclick: null,
+      p: [],
+      currentData: {},
     };
   },
   methods: {
+    // 接收xxx
+    recive(data) {
+      let mockData = [
+        {
+          name: "安徽省",
+          a: 1,
+          b: 2,
+          c: 3,
+          d: 4,
+          children: [
+            {
+              name: "合肥市",
+              a: 1,
+              b: 2,
+              c: 3,
+              d: 4,
+              children: [
+                {
+                  deviceName: "设备1",
+                  // position:[30.000,36.00],
+                  lontitude: 1111,
+                  latitude: 222,
+                  // xx: xxx,
+                },
+              ],
+            },
+          ],
+        },
+      ];
+      console.log(mockData);
+      console.log(data);
+      this.p = data;
+    },
+    /**
+     *
+     * @param {number} params
+     */
+    dilaog(params) {
+      this.MapLevel = params;
+    },
+
+    click() {
+      let p_name = "anhui";
+      let d = this.p.find((_p) => _p.name == p_name);
+      this.currentData = d;
+    },
     //初始化高德地图
     initMap(cityCenter) {
       AMapLoader.load({
@@ -116,184 +188,309 @@ export default {
           console.log(e);
         });
     },
+    initCanvas() {
+      renderer.domElement.style.position = "absolute";
+      renderer.domElement.style.zIndex = -1;
+      this.canvasDom.style.opacity = 1;
+      document.getElementById("container").appendChild(renderer.domElement); //设置canvas图层属性并插入节点中
+      labelRenderer.domElement.style.zIndex = 3;
+      document
+        .getElementById("container")
+        .appendChild(labelRenderer.domElement); //设置标签图层属性并插入节点中
+    },
+    //中国地图拾取事件
+    chooseEvent(e) {
+      choose(e, MeshGroup, this.MapLevel);
+    },
+    //省级地图拾取事件
+    provinceChoose(e) {
+      choose(e, provinceMeshgroup, this.MapLevel);
+    },
+    //市级地图拾取事件
+    cityChoose(e) {
+      choose(e, cityMeshgroup, this.MapLevel);
+    },
+    //中国地图跳转省级
+    switchProvince() {
+      const self = this;
+      document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
+      document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
+      if (chooseMesh) {
+        self.MapLevel = 2; //修改地图层级
+        window.removeEventListener("click", self.handleclick); //移除中国地图单击事件
+        window.removeEventListener("dblclick", self.handerDblclick); //移除中国地图双击事件
+        //相机拉近
+        let tween1 = gsap.to([camera.position, this.canvasDom.style], {
+          z: 250000000,
+          opacity: 0,
+          duration: 1,
+          ease: "none",
+          onComplete: async function () {
+            tween1.kill();
+            tween1 = null;
+            await self.clearChina(); //清空中国地图占用的内存
+            setTimeout(function () {
+              self.canvasDom.style.opacity = 1;
+            }, 10);
+            provinceMesh(); /////////加载省会地图卡不卡关键在这
+            restrictOp(!this.isRestrict, self.MapLevel); //启用角度缩放限制
+            ///////可以抽离方法，先写死。
+            camera.position.set(12812204, -17631082, 45185250); //调整相机位置在省份正前方
+            controls.target.set(13030745, 3771289, 20000); //调整相机指向到省份中心
+            window.addEventListener("click", self.provinceChoose); //绑定省级地图的单击监听事件，拾取网格体。
+            window.addEventListener("dblclick", self.switchCity); //绑定省级地图的双击监听事件，下钻市区。
+          },
+        });
+      } else {
+        return;
+      }
+    },
+    //省级跳转市级
+    switchCity() {
+      const self = this;
+      if (chooseMesh) {
+        this.MapLevel = 3;
+        window.removeEventListener("click", self.provinceChoose); //移除安徽地图的单击事件
+        window.removeEventListener("dblclick", self.cityChoose); //移除安徽地图的双击事件
+        //相机拉近
+        let tween1 = gsap.to([camera.position, this.canvasDom.style], {
+          z: 10000000,
+          opacity: 0,
+          duration: 1,
+          ease: "none",
+          onComplete: async () => {
+            tween1.kill();
+            tween1 = null;
+            await self.clearProvince(); //清空省级网格体
+            setTimeout(function () {
+              self.canvasDom.style.opacity = 1;
+            }, 10);
+            cityMesh(); //生成市级网格体
+            restrictOp(this.isRestrict, self.MapLevel); //启用角度缩放限制
+            ///////可以抽离方法，先写死。
+            camera.position.set(13117704, -1032688, 16476457); //调整相机位置在市区正前方
+            controls.target.set(13030745, 3771289, 20000); //调整相机指向市区中心
+            window.addEventListener("click", self.cityChoose); //绑定市级地图单击事件
+            window.addEventListener("dblclick", self.switchArea); //绑定市级地图双击事件
+          },
+        });
+        document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
+        document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
+      } else {
+        return;
+      }
+    },
+    //市级跳转高德
+    switchArea() {
+      const self = this;
+      if (chooseMesh) {
+        this.MapLevel = 4;
+        window.removeEventListener("click", self.provinceChoose); //移除市级地图的单击事件
+        window.removeEventListener("dblclick", self.cityChoose); //移除市级地图的双击事件
+        let tween1 = gsap.to([camera.position, this.canvasDom.style], {
+          z: 10000000,
+          opacity: 0,
+          duration: 1,
+          ease: "none",
+          onComplete: async function () {
+            tween1.kill();
+            tween1 = null;
+            await self.clearCity(); //清空市级网格体、字体
+            setTimeout(function () {
+              self.canvasDom.style.opacity = 1;
+            }, 1000);
+            self.initMap(cityCenter);
+            const dom = document.getElementById("Amap");
+            dom.style.visibility = "visible";
+            dom.style.zIndex = 50;
+          },
+        });
+      } else {
+        return;
+      }
+    },
+    //清空中国网格体、字体
+    clearChina() {
+      console.log("clear1111111111");
+      //清空网格体组(未清除dom标签)
+      MeshGroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material[0].dispose();
+          item.material[1].dispose();
+        }
+      });
+      scene.remove(MeshGroup);
+      //清空线框
+      lineGroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material.dispose();
+        }
+      });
+      scene.remove(lineGroup);
+      //清空字体
+      fontGroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material[0].dispose();
+          item.material[1].dispose();
+        }
+      });
+      scene.remove(fontGroup);
+      const tagarr = document.getElementsByClassName("tag");
+      while (tagarr.length > 0) {
+        tagarr[0].remove();
+      }
+    },
+    //清空省级网格体、字体
+    clearProvince() {
+      provinceMeshgroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material[0].dispose();
+          item.material[1].dispose();
+        }
+      });
+      scene.remove(provinceMeshgroup);
+      //清空线框
+      provinceLinegroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material.dispose();
+        }
+      });
+      scene.remove(provinceLinegroup);
+      //清空字体
+      provinceFontGroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material[0].dispose();
+          item.material[1].dispose();
+        }
+      });
+      scene.remove(provinceFontGroup);
+      const tagarr = document.getElementsByClassName("tag");
+      while (tagarr.length > 0) {
+        tagarr[0].remove();
+      }
+    },
+    //清空市级网格体、字体
+    clearCity() {
+      cityMeshgroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material[0].dispose();
+          item.material[1].dispose();
+        }
+      });
+      scene.remove(cityMeshgroup);
+      //清空线框
+      cityLineGroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material.dispose();
+        }
+      });
+      scene.remove(cityLineGroup);
+      //清空字体
+      cityFontGroup.traverse((item) => {
+        if (item.type === "Mesh") {
+          item.geometry.dispose();
+          item.material[0].dispose();
+          item.material[1].dispose();
+        }
+      });
+      scene.remove(cityFontGroup);
+      const tagarr = document.getElementsByClassName("tag");
+      while (tagarr.length > 0) {
+        tagarr[0].remove();
+      }
+    },
+    //返回上一级事件
+    //1：中国，2：省，3：市，4：区
+    goBack() {
+      if (this.MapLevel === 1) {
+        //生成中国
+        //清空省、市、区
+        console.log("中国");
+      } else if (this.MapLevel === 2) {
+        //生成省,绑定省的单双击事件，解绑市的单双击事件
+        //清空市、区
+        console.log("省份");
+      } else if (this.MapLevel === 3) {
+        //生成市
+        //隐藏高德区图
+        console.log("市");
+      } else {
+        console.log("区");
+      }
+    },
   },
   mounted() {
     const self = this;
-    const canvasDom = renderer.domElement;//threejs 画布
-    canvasDom.style.opacity = 1;
     const myVideo = this.$refs.myVideo;
-    const chooseEvent = (e) => {
-      choose(e, MeshGroup, level);
-    };
+    this.initCanvas(); //初始化Canvas画布
     //监听开场动画结束
     myVideo.addEventListener("ended", () => {
       //开场动画半透明消失
       let tween1 = gsap.to(myVideo, {
         opacity: 0,
-        duration: 0.1,
-        onComplete: () => {
+        duration: 1,
+        onComplete: function () {
           tween1.kill();
           tween1 = null;
-          myVideo.parentNode.removeChild(myVideo);
-          //绑定单击地图点击事件
-          window.addEventListener("click", chooseEvent);
-          //设置画布图层的位置与层级
-          document.getElementById("container").appendChild(renderer.domElement);
-          renderer.domElement.style.position = "absolute";
-          renderer.domElement.style.zIndex = 2;
-          //设置文字图层标签的位置与层级
-          document
-            .getElementById("container")
-            .appendChild(labelRenderer.domElement); //插入生成好的label标签到html中去
-          labelRenderer.domElement.style.zIndex = 3;
-          //相机由远拉近
-          //禁止相机限制
-          restrictOp(!this.isRestrict);
+          countryMesh(); //生成中国地图
+          renderer.domElement.style.zIndex = 1;
+          myVideo.parentNode.removeChild(myVideo); //移除video节点
+          //单击显示省会设备标签
+          self.handleclick = (e) => {
+            // if (self.clcikTimer) {
+            //   clearTimeout(self.clcikTimer);
+            //   self.clcikTimer = null;
+            // } else {
+            //   self.clcikTimer = setTimeout(() => {
+            //     self.chooseEvent(e);
+            //     console.log("单击事件");
+            //   }, 200);
+            // }
+            self.clcikTimer = setTimeout(() => {
+              self.chooseEvent(e);
+              console.log("单击事件");
+            }, 10);
+          };
+          window.addEventListener("click", self.handleclick);
+          //双击跳转省会界面立体图
+          self.handerDblclick = () => {
+            clearTimeout(self.clcikTimer);
+            console.log("双击事件");
+            self.switchProvince();
+          };
+          window.addEventListener("dblclick", self.handerDblclick);
+          //进场动画
           let tween2 = gsap.to(camera.position, {
-            z: 500000000,
+            z: 302228637,
+            y: -170312569,
+            x: 5851739,
             duration: 1,
             ease: "none",
+            onStart: () => {
+              restrictOp(!this.isRestrict, self.MapLevel); //禁用角度限制
+              // {x: 5851739.247058666, y: -170312569.5972976, z: 302228637.66853005,
+            },
             onComplete: () => {
               tween2.kill();
               tween2 = null;
-              //启用相机限制
-              restrictOp(this.isRestrict);
+              restrictOp(this.isRestrict, self.MapLevel); //启用角度缩放限制
+              console.log(camera.position);
             },
           });
-          //双击安徽地图事件
-          function chooseCity() {
-            if (chooseMesh) {
-              //相机拉近
-              let tween1 = gsap.to([camera.position, canvasDom.style], {
-                z: 10000000,
-                opacity: 0,
-                duration: 1,
-                ease: "none",
-                onComplete: () => {
-                  tween1.kill();
-                  tween1 = null;
-                  // self.initMap(cityCenter);
-                  // const dom = document.getElementById("Amap");
-                  // dom.style.visibility = "visible";
-                  // dom.style.zIndex = 50;
-                  anhuiMeshgroup.traverse((item) => {
-                    if (item.type === "Mesh") {
-                      item.geometry.dispose();
-                      item.material[0].dispose();
-                      item.material[1].dispose();
-                    }
-                  });
-                  scene.remove(anhuiMeshgroup);
-                  //清空线框
-                  anhuiLinegroup.traverse((item) => {
-                    if (item.type === "Mesh") {
-                      item.geometry.dispose();
-                      item.material.dispose();
-                    }
-                  });
-                  scene.remove(anhuiLinegroup);
-                  //清空字体
-                  fontAnhuiGroup.traverse((item) => {
-                    if (item.type === "Mesh") {
-                      item.geometry.dispose();
-                      item.material[0].dispose();
-                      item.material[1].dispose();
-                    }
-                  });
-                  scene.remove(fontAnhuiGroup);
-                  const tagarr = document.getElementsByClassName("tag");
-                  while (tagarr.length > 0) {
-                    tagarr[0].remove();
-                  }
-
-                  camera.position.set(13124121.88, 3776272.11, 20000000); //调整相机位置在省份正前方
-                  controls.target.set(13030745, 3771289, 20000); //调整相机指向到省份中心
-                  self.city = cityMesh(this.level2);
-                  self.cityMeshChoose = (e) => {
-                    choose(e, self.city, this.level2);
-                  };
-                  canvasDom.style.opacity = 1;
-                },
-              });
-              this.level2 = 3;
-
-              document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
-              document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
-              window.removeEventListener("click", self.anhuiChoose); //移除安徽地图的单击事件
-              window.removeEventListener("dblclick", chooseCity); //移除安徽地图的双击事件
-              window.addEventListener("click", self.cityMeshChoose); //绑定市级地图单击事件
-            } else {
-              return;
-            }
-          }
-          //安徽地图方法
-          function chooseAnhui() {
-            document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
-            document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
-            if (chooseMesh) {
-              //相机拉近
-              const tween1 = gsap.to([camera.position, canvasDom.style], {
-                z: 250000000,
-                opacity: 0,
-                duration: 1,
-                ease: "none",
-                onComplete: function () {
-                  //清空网格体组(未清除dom标签)
-                  MeshGroup.traverse((item) => {
-                    if (item.type === "Mesh") {
-                      item.geometry.dispose();
-                      item.material[0].dispose();
-                      item.material[1].dispose();
-                    }
-                  });
-                  scene.remove(MeshGroup);
-                  //清空线框
-                  lineGroup.traverse((item) => {
-                    if (item.type === "Mesh") {
-                      item.geometry.dispose();
-                      item.material.dispose();
-                    }
-                  });
-                  scene.remove(lineGroup);
-                  //清空字体
-                  fontGroup.traverse((item) => {
-                    if (item.type === "Mesh") {
-                      item.geometry.dispose();
-                      item.material[0].dispose();
-                      item.material[1].dispose();
-                    }
-                  });
-                  scene.remove(fontGroup);
-                  const tagarr = document.getElementsByClassName("tag");
-                  while (tagarr.length > 0) {
-                    tagarr[0].remove();
-                  }
-                  tween1.kill();
-                  canvasDom.style.opacity = 1; //画布恢复
-                  camera.position.set(13124121.88, 3776272.11, 50000000); //调整相机位置再省份正前方
-                  controls.target.set(13030745, 3771289, 20000); //调整相机指向到省份中心
-                  //移除中国地图的单击监听事件
-                  window.removeEventListener("click", chooseEvent);
-                  //移除中国地图的双击事件
-                  window.removeEventListener("dblclick", chooseAnhui);
-                  this.level2 = 2; //修改level的值用于拾取事件中修改标签的大小
-                  self.anhui = anhuiMesh(this.level2);
-                  self.anhuiChoose = (e) => {
-                    choose(e, self.anhui, this.level2);
-                  };
-                  window.addEventListener("click", self.anhuiChoose); //绑定安徽地图的单击监听事件，拾取网格体。
-                  window.addEventListener("dblclick", chooseCity); //绑定安徽地图的双击监听事件，下钻市区。
-                },
-              });
-            } else {
-              return;
-            }
-          }
-          //绑定双击中国地图事件跳转到安徽地图
-          window.addEventListener("dblclick", chooseAnhui);
         },
       });
     });
+
+    let mockData = [{ name: "安徽省", a: 1, b: 2, c: 3, d: 4 }];
+    this.recive(mockData);
   },
 };
 </script>
