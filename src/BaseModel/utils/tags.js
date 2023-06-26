@@ -1,31 +1,12 @@
 //封装的一个函数，用来批量生成html标签和CSS2D模型。
 import {
-  CSS3DObject,
+  // CSS3DObject,
   CSS3DRenderer,
   CSS3DSprite,
 } from "three/addons/renderers/CSS3DRenderer.js";
 import { camera } from "../RenderCamera";
 //地名标签
-function tags(name) {
-  //创建一个div标签
-  let dom = document.createElement("div");
-  dom.innerHTML = name;
-  dom.style.color = 0xffffff;
-  dom.style.position = "absolute";
-  dom.style.pointerEvents = "none";
-  dom.style.color = "#ffffff";
-  dom.style.fontSize = "30px";
-  dom.style.fontWeight = 700;
-  dom.style.textShadow = "3px 3px 1px #ff0000";
-  // console.log("dom.style.color", dom);
-  dom.classList.add("tag");
-  //div标签包装为css2dobject label模型
-  let label1 = new CSS3DObject(dom);
-  label1.name = "province";
-  // label1.rotateY(Math.PI / 2);
-  label1.scale.set(4000, 4000, 4000);
-  return label1; //返回label模型
-}
+
 //点开的详细信息的标签
 function listTags(level) {
   const dom = document.getElementById("hello");
@@ -68,4 +49,4 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
 });
 
-export { listTags, tags, arrowTags, labelRenderer };
+export { listTags, arrowTags, labelRenderer };

@@ -387,7 +387,7 @@
       },
       "properties": {
         "adcode": 340100,
-        "name": "合肥",
+        "name": "合肥市",
         "center": [117.283042, 31.86119],
         "centroid": [117.360447, 31.762594],
         "childrenNum": 9,
@@ -706,7 +706,7 @@
       },
       "properties": {
         "adcode": 340200,
-        "name": "芜湖",
+        "name": "芜湖市",
         "center": [118.376451, 31.326319],
         "centroid": [118.13997, 31.160935],
         "childrenNum": 7,
@@ -1004,7 +1004,7 @@
       },
       "properties": {
         "adcode": 340300,
-        "name": "蚌埠",
+        "name": "蚌埠市",
         "center": [117.363228, 32.939667],
         "centroid": [117.330324, 33.107951],
         "childrenNum": 7,
@@ -1251,7 +1251,7 @@
       },
       "properties": {
         "adcode": 340400,
-        "name": "淮南",
+        "name": "淮南市",
         "center": [117.018329, 32.647574],
         "centroid": [116.773391, 32.47172],
         "childrenNum": 7,
@@ -1526,7 +1526,7 @@
       },
       "properties": {
         "adcode": 340500,
-        "name": "马鞍山",
+        "name": "马鞍山市",
         "center": [118.507906, 31.689362],
         "centroid": [118.369758, 31.637138],
         "childrenNum": 6,
@@ -1793,7 +1793,7 @@
       },
       "properties": {
         "adcode": 340600,
-        "name": "淮北",
+        "name": "淮北市",
         "center": [116.794664, 33.971707],
         "centroid": [116.74441, 33.720047],
         "childrenNum": 4,
@@ -2020,7 +2020,7 @@
       },
       "properties": {
         "adcode": 340700,
-        "name": "铜陵",
+        "name": "铜陵市",
         "center": [117.816576, 30.929935],
         "centroid": [117.566978, 30.888245],
         "childrenNum": 4,
@@ -2366,7 +2366,7 @@
       },
       "properties": {
         "adcode": 340800,
-        "name": "安庆",
+        "name": "安庆市",
         "center": [117.043551, 30.50883],
         "centroid": [116.451502, 30.574825],
         "childrenNum": 10,
@@ -2737,7 +2737,7 @@
       },
       "properties": {
         "adcode": 341000,
-        "name": "黄山",
+        "name": "黄山市",
         "center": [118.317325, 29.709239],
         "centroid": [118.076088, 29.904836],
         "childrenNum": 7,
@@ -3256,7 +3256,7 @@
       },
       "properties": {
         "adcode": 341100,
-        "name": "滁州",
+        "name": "滁州市",
         "center": [118.316264, 32.303627],
         "centroid": [118.107896, 32.543514],
         "childrenNum": 8,
@@ -3676,7 +3676,7 @@
       },
       "properties": {
         "adcode": 341200,
-        "name": "阜阳",
+        "name": "阜阳市",
         "center": [115.819729, 32.896969],
         "centroid": [115.709049, 32.916536],
         "childrenNum": 8,
@@ -4189,7 +4189,7 @@
       },
       "properties": {
         "adcode": 341300,
-        "name": "宿州",
+        "name": "宿州市",
         "center": [116.984084, 33.633891],
         "centroid": [117.213919, 33.860274],
         "childrenNum": 5,
@@ -4628,7 +4628,7 @@
       },
       "properties": {
         "adcode": 341500,
-        "name": "六安",
+        "name": "六安市",
         "center": [116.507676, 31.752889],
         "centroid": [116.23409, 31.659225],
         "childrenNum": 7,
@@ -4961,7 +4961,7 @@
       },
       "properties": {
         "adcode": 341600,
-        "name": "亳州",
+        "name": "亳州市",
         "center": [115.782939, 33.869338],
         "centroid": [116.185025, 33.435253],
         "childrenNum": 4,
@@ -5287,7 +5287,7 @@
       },
       "properties": {
         "adcode": 341700,
-        "name": "池州",
+        "name": "池州市",
         "center": [117.489157, 30.656037],
         "centroid": [117.371465, 30.282082],
         "childrenNum": 4,
@@ -5752,7 +5752,7 @@
       },
       "properties": {
         "adcode": 341800,
-        "name": "宣城",
+        "name": "宣城市",
         "center": [118.757995, 30.945667],
         "centroid": [118.857477, 30.684955],
         "childrenNum": 7,

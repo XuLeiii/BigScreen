@@ -33,19 +33,27 @@
       >
         <source src="../../public/img/开场动画.mp4" />
       </video>
-      <!-- 设备信息 -->
+      <!-- 设备数量信息 -->
       <div
         id="hello"
         style="visibility: hidden; z-index: 5; position: absolute"
       >
         <div class="label">
-          <span>4G高清执法记录仪：1</span>
-          <div class="line1"><span>一体化布控球：2</span></div>
-          <div class="line2"><span>手持单兵：3</span></div>
-          <div class="line3"><span>4G车载监控终端：4</span></div>
+          <span>4G高清执法记录仪：{{ this.Level().a || 0 }}</span>
+          <div class="line1">
+            <span>一体化布控球：{{ this.Level().b || 0 }}</span>
+          </div>
+          <div class="line2">
+            <span>手持单兵：{{ this.Level().c || 0 }}</span>
+          </div>
+          <div class="line3">
+            <span>4G车载监控终端：{{ this.Level().d || 0 }}</span>
+          </div>
           <div class="angle"></div>
         </div>
       </div>
+      <!-- 市级设备样式 -->
+
       <!-- 定位图标 -->
       <img
         id="arrow"
@@ -114,60 +122,28 @@ export default {
       canvasDom: renderer.domElement,
       MapLevel: 1, //地图层级
       isRestrict: true, //是否开启相机限制
-      city: null,
-      clcikTimer: null,
-      handleclick: null,
-      handerDblclick: null,
-      p: [],
-      currentData: {},
+      chooseMeshName: null, //选中网格体名称
+      provinceData: [], //全部省份设备数据
+      currentData: {}, //当前省份的数据
+      currentData1: {}, //当前市级的数据
+      currentData2: {}, //当前区县的数据
     };
   },
   methods: {
-    // 接收xxx
+    //判断层级并返回对应层级的数据
+    Level() {
+      if (this.MapLevel === 1) {
+        return this.currentData;
+      } else if (this.MapLevel === 2) {
+        return this.currentData1;
+      } else {
+        return this.currentData2;
+      }
+    },
+    // 模拟接收xxx
     recive(data) {
-      let mockData = [
-        {
-          name: "安徽省",
-          a: 1,
-          b: 2,
-          c: 3,
-          d: 4,
-          children: [
-            {
-              name: "合肥市",
-              a: 1,
-              b: 2,
-              c: 3,
-              d: 4,
-              children: [
-                {
-                  deviceName: "设备1",
-                  // position:[30.000,36.00],
-                  lontitude: 1111,
-                  latitude: 222,
-                  // xx: xxx,
-                },
-              ],
-            },
-          ],
-        },
-      ];
-      console.log(mockData);
       console.log(data);
-      this.p = data;
-    },
-    /**
-     *
-     * @param {number} params
-     */
-    dilaog(params) {
-      this.MapLevel = params;
-    },
-
-    click() {
-      let p_name = "anhui";
-      let d = this.p.find((_p) => _p.name == p_name);
-      this.currentData = d;
+      this.provinceData = data;
     },
     //初始化高德地图
     initMap(cityCenter) {
@@ -179,6 +155,7 @@ export default {
         .then((AMap) => {
           this.map = new AMap.Map("Amap", {
             //设置地图容器id
+            mapStyle: "amap://styles/darkblue", //设置地图的显示样式
             viewMode: "3D", //是否为3D地图模式
             zoom: 11, //初始化地图级别
             center: [cityCenter[0], cityCenter[1]], //初始化地图中心点位置
@@ -188,6 +165,7 @@ export default {
           console.log(e);
         });
     },
+    //初始化画布
     initCanvas() {
       renderer.domElement.style.position = "absolute";
       renderer.domElement.style.zIndex = -1;
@@ -198,27 +176,30 @@ export default {
         .getElementById("container")
         .appendChild(labelRenderer.domElement); //设置标签图层属性并插入节点中
     },
-    //中国地图拾取事件
-    chooseEvent(e) {
-      choose(e, MeshGroup, this.MapLevel);
-    },
-    //省级地图拾取事件
-    provinceChoose(e) {
-      choose(e, provinceMeshgroup, this.MapLevel);
-    },
-    //市级地图拾取事件
-    cityChoose(e) {
-      choose(e, cityMeshgroup, this.MapLevel);
+    //相机位置自适应
+    cameraPosition() {
+      camera.position.set(
+        chooseMesh.geometry.boundingSphere.center.x,
+        -((chooseMesh.geometry.boundingSphere.center.y * 10) / 3),
+        chooseMesh.geometry.boundingSphere.radius * 105
+      );
+      controls.target.set(
+        chooseMesh.geometry.boundingSphere.center.x,
+        chooseMesh.geometry.boundingSphere.center.y,
+        20000
+      );
     },
     //中国地图跳转省级
     switchProvince() {
+      console.log(3);
       const self = this;
       document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
       document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
       if (chooseMesh) {
         self.MapLevel = 2; //修改地图层级
-        window.removeEventListener("click", self.handleclick); //移除中国地图单击事件
-        window.removeEventListener("dblclick", self.handerDblclick); //移除中国地图双击事件
+        window.onclick = null; //移除中国地图单击事件
+        window.ondblclick = null; //移除中国地图双击事件
+        console.log("chooseMesh", chooseMesh);
         //相机拉近
         let tween1 = gsap.to([camera.position, this.canvasDom.style], {
           z: 250000000,
@@ -232,13 +213,28 @@ export default {
             setTimeout(function () {
               self.canvasDom.style.opacity = 1;
             }, 10);
-            provinceMesh(); /////////加载省会地图卡不卡关键在这
+            provinceMesh(self.chooseMeshName); /////////加载省会地图卡不卡关键在这
             restrictOp(!this.isRestrict, self.MapLevel); //启用角度缩放限制
-            ///////可以抽离方法，先写死。
-            camera.position.set(12812204, -17631082, 45185250); //调整相机位置在省份正前方
-            controls.target.set(13030745, 3771289, 20000); //调整相机指向到省份中心
-            window.addEventListener("click", self.provinceChoose); //绑定省级地图的单击监听事件，拾取网格体。
-            window.addEventListener("dblclick", self.switchCity); //绑定省级地图的双击监听事件，下钻市区。
+            //调整相机位置与目标点位置
+            self.cameraPosition();
+            //绑定省级地图的单击监听事件，拾取网格体。
+            window.onclick = (e) => {
+              self.chooseMeshName = choose(e, provinceMeshgroup, self.MapLevel);
+              self.currentData1 = self.currentData.children.find((val) => {
+                return val.name === self.chooseMeshName;
+              });
+              if (self.currentData1 === undefined) {
+                self.currentData1 = 0;
+              }
+            };
+            //绑定省级地图的双击监听事件，下钻市区。
+            window.ondblclick = () => {
+              if (!self.currentData1) {
+                return;
+              } else {
+                self.switchCity();
+              }
+            };
           },
         });
       } else {
@@ -250,28 +246,45 @@ export default {
       const self = this;
       if (chooseMesh) {
         this.MapLevel = 3;
-        window.removeEventListener("click", self.provinceChoose); //移除安徽地图的单击事件
-        window.removeEventListener("dblclick", self.cityChoose); //移除安徽地图的双击事件
+        window.onclick = null; //移除安徽地图的单击事件
+        window.ondblclick = null; //移除安徽地图的双击事件
         //相机拉近
         let tween1 = gsap.to([camera.position, this.canvasDom.style], {
           z: 10000000,
           opacity: 0,
           duration: 1,
           ease: "none",
-          onComplete: async () => {
+          onComplete: () => {
             tween1.kill();
             tween1 = null;
-            await self.clearProvince(); //清空省级网格体
+            self.clearProvince(); //清空省级网格体
             setTimeout(function () {
               self.canvasDom.style.opacity = 1;
             }, 10);
-            cityMesh(); //生成市级网格体
+            cityMesh(self.chooseMeshName); //生成市级网格体
             restrictOp(this.isRestrict, self.MapLevel); //启用角度缩放限制
-            ///////可以抽离方法，先写死。
-            camera.position.set(13117704, -1032688, 16476457); //调整相机位置在市区正前方
-            controls.target.set(13030745, 3771289, 20000); //调整相机指向市区中心
-            window.addEventListener("click", self.cityChoose); //绑定市级地图单击事件
-            window.addEventListener("dblclick", self.switchArea); //绑定市级地图双击事件
+            //调整相机位置与目标点位置
+            self.cameraPosition();
+            //绑定市级地图单击事件
+            window.onclick = (e) => {
+              self.chooseMeshName = choose(e, cityMeshgroup, this.MapLevel);
+              self.currentData2 = self.currentData1.children.find((val) => {
+                return val.name === self.chooseMeshName;
+              });
+              if (self.currentData2 === undefined) {
+                self.currentData2 = 0;
+              }
+            };
+            //绑定市级地图双击事件
+            window.ondblclick = () => {
+              if (!self.currentData2) {
+                console.log(1);
+                return;
+              } else {
+                console.log(2);
+                self.switchArea();
+              }
+            };
           },
         });
         document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
@@ -283,10 +296,12 @@ export default {
     //市级跳转高德
     switchArea() {
       const self = this;
+      document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
+      document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
       if (chooseMesh) {
         this.MapLevel = 4;
-        window.removeEventListener("click", self.provinceChoose); //移除市级地图的单击事件
-        window.removeEventListener("dblclick", self.cityChoose); //移除市级地图的双击事件
+        window.onclick = null; //移除市级地图的单击事件
+        window.ondblclick = null; //移除市级地图的双击事件
         let tween1 = gsap.to([camera.position, this.canvasDom.style], {
           z: 10000000,
           opacity: 0,
@@ -345,6 +360,7 @@ export default {
     },
     //清空省级网格体、字体
     clearProvince() {
+      console.log("清空省级？？？");
       provinceMeshgroup.traverse((item) => {
         if (item.type === "Mesh") {
           item.geometry.dispose();
@@ -409,23 +425,23 @@ export default {
     },
     //返回上一级事件
     //1：中国，2：省，3：市，4：区
-    goBack() {
-      if (this.MapLevel === 1) {
-        //生成中国
-        //清空省、市、区
-        console.log("中国");
-      } else if (this.MapLevel === 2) {
-        //生成省,绑定省的单双击事件，解绑市的单双击事件
-        //清空市、区
-        console.log("省份");
-      } else if (this.MapLevel === 3) {
-        //生成市
-        //隐藏高德区图
-        console.log("市");
-      } else {
-        console.log("区");
-      }
-    },
+    // goBack() {
+    //   if (this.MapLevel === 1) {
+    //     //生成中国
+    //     //清空省、市、区
+    //     console.log("中国");
+    //   } else if (this.MapLevel === 2) {
+    //     //生成省,绑定省的单双击事件，解绑市的单双击事件
+    //     //清空市、区
+    //     console.log("省份");
+    //   } else if (this.MapLevel === 3) {
+    //     //生成市
+    //     //隐藏高德区图
+    //     console.log("市");
+    //   } else {
+    //     console.log("区");
+    //   }
+    // },
   },
   mounted() {
     const self = this;
@@ -444,29 +460,25 @@ export default {
           renderer.domElement.style.zIndex = 1;
           myVideo.parentNode.removeChild(myVideo); //移除video节点
           //单击显示省会设备标签
-          self.handleclick = (e) => {
-            // if (self.clcikTimer) {
-            //   clearTimeout(self.clcikTimer);
-            //   self.clcikTimer = null;
-            // } else {
-            //   self.clcikTimer = setTimeout(() => {
-            //     self.chooseEvent(e);
-            //     console.log("单击事件");
-            //   }, 200);
-            // }
-            self.clcikTimer = setTimeout(() => {
-              self.chooseEvent(e);
-              console.log("单击事件");
-            }, 10);
+          window.onclick = (e) => {
+            self.chooseMeshName = choose(e, MeshGroup, self.MapLevel);
+            self.currentData = self.provinceData.find((val) => {
+              return val.name === self.chooseMeshName;
+            });
+            if (self.currentData === undefined) {
+              self.currentData = 0;
+            }
           };
-          window.addEventListener("click", self.handleclick);
           //双击跳转省会界面立体图
-          self.handerDblclick = () => {
-            clearTimeout(self.clcikTimer);
-            console.log("双击事件");
-            self.switchProvince();
+          window.ondblclick = () => {
+            if (!self.currentData) {
+              console.log(1);
+              return;
+            } else {
+              console.log(2);
+              self.switchProvince();
+            }
           };
-          window.addEventListener("dblclick", self.handerDblclick);
           //进场动画
           let tween2 = gsap.to(camera.position, {
             z: 302228637,
@@ -488,8 +500,162 @@ export default {
         },
       });
     });
-
-    let mockData = [{ name: "安徽省", a: 1, b: 2, c: 3, d: 4 }];
+    //模拟客户端调用数据
+    let mockData = [
+      {
+        name: "安徽",
+        a: 10,
+        b: 10,
+        c: 10,
+        d: 10,
+        children: [
+          {
+            name: "合肥市",
+            a: 2,
+            b: 2,
+            c: 1,
+            d: 1,
+            children: [
+              {
+                name: "蜀山区",
+                a: 2,
+                b: 0,
+                c: 0,
+                d: 0,
+                deviceName: [
+                  {
+                    name: "设备a",
+                    position: [30.0, 36.0],
+                  },
+                  {
+                    name: "设备b",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+              {
+                name: "巢湖市",
+                a: 0,
+                b: 2,
+                c: 0,
+                d: 0,
+                deviceName: [
+                  {
+                    name: "设备a",
+                    position: [30.0, 36.0],
+                  },
+                  {
+                    name: "设备b",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+              {
+                name: "肥西县",
+                a: 0,
+                b: 0,
+                c: 1,
+                d: 0,
+                deviceName: [
+                  {
+                    name: "设备c",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+              {
+                name: "庐江县",
+                a: 0,
+                b: 0,
+                c: 0,
+                d: 1,
+                deviceName: [
+                  {
+                    name: "设备d",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "阜阳市",
+            a: 99,
+            b: 88,
+            c: 77,
+            d: 66,
+            children: [
+              {
+                name: "颍上县",
+                a: 2,
+                b: 0,
+                c: 0,
+                d: 0,
+                deviceName: [
+                  {
+                    name: "设备a",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: "四川",
+        a: 233,
+        b: 233,
+        c: 233,
+        d: 233,
+        children: [
+          {
+            name: "成都市",
+            a: 133,
+            b: 133,
+            c: 133,
+            d: 133,
+            children: [
+              {
+                name: "金牛区",
+                a: 133,
+                b: 133,
+                c: 133,
+                d: 133,
+                deviceName: [
+                  {
+                    name: "设备a",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            name: "乐山市",
+            a: 1,
+            b: 2,
+            c: 3,
+            d: 4,
+            children: [
+              {
+                name: "沙湾区",
+                a: 1,
+                b: 2,
+                c: 3,
+                d: 4,
+                deviceName: [
+                  {
+                    name: "设备a",
+                    position: [30.0, 36.0],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
     this.recive(mockData);
   },
 };

@@ -44,6 +44,9 @@ function countryMesh() {
           item.properties.center[0],
           item.properties.center[1]
         );
+        //为网格体添加名称属性name
+        shapeMesh.userData.name = item.properties.name;
+
         //简化几何体面数量
         // const modifier = new SimplifyModifier();
         // shapeMesh.geometry = modifier.modify(shapeMesh.geometry, 0.11);
@@ -77,9 +80,9 @@ function countryMesh() {
 //省级
 const provinceMeshgroup = new THREE.Group(); //模型组
 const provinceLinegroup = new THREE.Group(); //线框组
-function provinceMesh(level) {
-  console.log(level);
-  loaderfile.load("/BaseModel/安徽省.json", async (data) => {
+function provinceMesh(name) {
+  console.log("name", name);
+  loaderfile.load(`/BaseModel/${name}.json`, async (data) => {
     data.features.forEach((item) => {
       if (item.geometry.type === "Polygon") {
         item.geometry.coordinates = [item.geometry.coordinates];
@@ -103,6 +106,8 @@ function provinceMesh(level) {
         let shapeMesh = generateMap(ShapeGeometry);
         shapeMesh.userData.center = item.properties.center;
         provinceMeshgroup.add(shapeMesh);
+        //为网格体添加名称属性name
+        shapeMesh.userData.name = item.properties.name;
         //2.线框
         let pointArr = [];
         point[0].forEach((val) => {
@@ -132,9 +137,8 @@ function provinceMesh(level) {
 //市级
 const cityMeshgroup = new THREE.Group();
 const cityLineGroup = new THREE.Group();
-function cityMesh(level) {
-  console.log(level);
-  loaderfile.load("/BaseModel/合肥市.json", async (data) => {
+function cityMesh(name) {
+  loaderfile.load(`/BaseModel/${name}.json`, async (data) => {
     data.features.forEach(async (item) => {
       if (item.geometry.type === "Polygon") {
         item.geometry.coordinates = [item.geometry.coordinates];
@@ -157,6 +161,8 @@ function cityMesh(level) {
         //为网格体添加中心坐标属性center
         shapeMesh.userData.center = item.properties.center;
         cityMeshgroup.add(shapeMesh);
+        //为网格体添加名称属性name
+        shapeMesh.userData.name = item.properties.name;
         //2.地名文字
         let xy = lon2xy(
           item.properties.centroid[0],

@@ -24,7 +24,7 @@ function choose(event, mesh, level) {
     }
     arrowArry[0].visible = false;
   }
-  console.log("调用了choose");
+  // console.log("调用了choose");
   //1.获取当前鼠标的坐标
   let Sx = event.clientX;
   let Sy = event.clientY;
@@ -101,6 +101,8 @@ function choose(event, mesh, level) {
     //边缘高光、、、、、、、、、、、、、
     // let a = selectEmissive(chooseMesh);
     // composer.addPass(a);
+    console.log("chooseMesh.userData.name", chooseMesh.userData.name);
+    return chooseMesh.userData.name;
   } else {
     chooseMesh = 0;
   }
