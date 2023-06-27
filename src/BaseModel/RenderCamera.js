@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-
 //1.相机
 const camera = new THREE.PerspectiveCamera(
   1,
@@ -9,7 +8,7 @@ const camera = new THREE.PerspectiveCamera(
   5000000000
 );
 
-camera.position.set(11610512.75,1071117.8125, 270000000);
+camera.position.set(11610512.75, 1071117.8125, 270000000);
 // camera.position.set(0,0, 0);
 //2.渲染器
 const renderer = new THREE.WebGLRenderer({
@@ -27,6 +26,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(11610512.75, 4571117.8125, 0);
+
 // controls.enablePan = false;//禁用鼠标右键
 //视角操作限制
 //bol：是否启用限制

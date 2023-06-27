@@ -27,6 +27,7 @@ function generateMap(shapeGeometry) {
   texture.repeat.set(1.7, 0.9);
   texture.offset.set(0.999, 1);
   const upMaterial = new THREE.MeshLambertMaterial({
+    // wireframe: true,
     color: 0x00a2ff,
     map: texture,
     opacity: 1,
@@ -34,6 +35,7 @@ function generateMap(shapeGeometry) {
     side: THREE.DoubleSide,
   });
   const sideMaterial = new THREE.MeshLambertMaterial({
+    // wireframe: true,
     color: 0x00a2ff,
     opacity: 1,
     transparent: true,

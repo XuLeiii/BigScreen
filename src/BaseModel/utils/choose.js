@@ -14,7 +14,7 @@ let cityCenter = 0;
 function choose(event, mesh, level) {
   if (chooseMesh) {
     chooseMesh.material[0].color.set(0x00a2ff); //当选A模型后，再选择B模型，此时需要将A模型的颜色设为本身的颜色
-    chooseMesh.material[1].color.set(0x00a2ff);
+    // chooseMesh.material[1].color.set(0x00a2ff);
     if (labelArry.length > 1) {
       labelArry.shift();
     }
@@ -41,14 +41,17 @@ function choose(event, mesh, level) {
   if (intersetc.length > 0) {
     //1.取出被选中的模型
     chooseMesh = intersetc[0].object;
+    console.log("chooseMesh ", chooseMesh.userData.name, chooseMesh);
     //射线与网格的交点坐标
     chooseMesh.material[0].color.set(0x0054ef);
-    chooseMesh.material[1].color.set(0x0054ef);
+    // chooseMesh.material[1].color.set(0x0054ef);
     const label = listTags(level); //设备信息标签
     const arrowLabel = arrowTags(level); //箭头图片
-    //几何体中心坐标
-    let x = chooseMesh.geometry.boundingSphere.center.x;
-    let y = chooseMesh.geometry.boundingSphere.center.y;
+    //几何体中心坐标确定标签的位置
+    // let x = chooseMesh.geometry.boundingSphere.center.x;
+    // let y = chooseMesh.geometry.boundingSphere.center.y;
+    let x = chooseMesh.userData.center.x;
+    let y = chooseMesh.userData.center.y;
     let pos = new THREE.Vector3(x, y, 220000);
     label.rotation.x = Math.PI / 2;
     if (level === 1) {
@@ -101,7 +104,7 @@ function choose(event, mesh, level) {
     //边缘高光、、、、、、、、、、、、、
     // let a = selectEmissive(chooseMesh);
     // composer.addPass(a);
-    console.log("chooseMesh.userData.name", chooseMesh.userData.name);
+    // console.log("chooseMesh.userData.name", chooseMesh.userData.name);
     return chooseMesh.userData.name;
   } else {
     chooseMesh = 0;

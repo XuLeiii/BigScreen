@@ -1,5 +1,7 @@
 import * as THREE from "three";
-// import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils";
+// import { exportGLTF } from "../utils/exportGLTF";
+// eslint-disable-next-line no-unused-vars
+import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils";
 // eslint-disable-next-line no-unused-vars
 import { SimplifyModifier } from "three/examples/jsm/modifiers/SimplifyModifier.js";
 import {
@@ -10,7 +12,6 @@ import {
 import { generateMap } from "../utils/generateMap";
 import { lon2xy } from "../utils/math";
 import { scene } from ".";
-
 const loaderfile = new THREE.FileLoader();
 loaderfile.setResponseType("json");
 
@@ -20,6 +21,8 @@ let lineGroup = new THREE.Group(); //线框组
 function countryMesh() {
   loaderfile.load("/BaseModel/中国.json", async (data) => {
     data.features.forEach((item) => {
+      let simpleGeometry = []; //岛屿geometry
+      let simpleMaterial = []; //岛屿material
       // 1.模型
       if (item.geometry.type === "Polygon") {
         item.geometry.coordinates = [item.geometry.coordinates];
@@ -39,20 +42,59 @@ function countryMesh() {
         });
         //生成具有网格体的数组
         let shapeMesh = generateMap(shapeGeometry);
-        //为网格体添加中心坐标属性center
-        shapeMesh.userData.center = lon2xy(
-          item.properties.center[0],
-          item.properties.center[1]
-        );
-        //为网格体添加名称属性name
-        shapeMesh.userData.name = item.properties.name;
-
         //简化几何体面数量
         // const modifier = new SimplifyModifier();
-        // shapeMesh.geometry = modifier.modify(shapeMesh.geometry, 0.11);
-        // console.log("simplified后", simplified);
-        MeshGroup.add(shapeMesh);
+        // const simplifyMesh = shapeMesh.clone();
+        // simplifyMesh.geometry.setAttribute(
+        //   "normal",
+        //   shapeMesh.geometry.attributes.normal.clone()
+        // );
+        // simplifyMesh.geometry.setAttribute(
+        //   "uv",
+        //   shapeMesh.geometry.attributes.uv.clone()
+        // );
+        // console.log("shapeMesh", shapeMesh);
+        // console.log("simplifyMesh", simplifyMesh);
+
+        // // simplifyMesh.material[0] = simplifyMesh.material[0].clone();
+        // // simplifyMesh.material[0].flatShading = true;
+        // // simplifyMesh.material[1] = simplifyMesh.material[1].clone();
+        // // simplifyMesh.material[1].flatShading = true;
+        // const count = Math.floor(
+        //   simplifyMesh.geometry.attributes.position.count * 0.1
+        // );
+        // simplifyMesh.geometry = modifier.modify(simplifyMesh.geometry, count);
+        //合并几何体
+        // if (
+        //   // item.properties.name === "南海" ||
+        //   item.properties.name === "海南"
+        // ) {
+        //   // console.log("南海geometry", shapeMesh.geometry);
+        //   islandGeometry.push(shapeMesh.geometry);
+        //   islandMaterial.push(shapeMesh.material[0]);
+        //   return;
+        // }
+        // console.log("南海geometry", shapeMesh.geometry);
+        simpleGeometry.push(shapeMesh.geometry);
+        simpleMaterial.push(shapeMesh.material[0]);
+
+        // MeshGroup.add(shapeMesh);
       });
+      //合并网格体
+      const mergedGeometries = BufferGeometryUtils.mergeGeometries(
+        simpleGeometry,
+        true
+      );
+      const singleMergeMesh = new THREE.Mesh(mergedGeometries, simpleMaterial);
+      //为网格体添加名称属性name
+      singleMergeMesh.userData.name = item.properties.name;
+      //为省会网格体添加省会坐标属性center
+      singleMergeMesh.userData.center = lon2xy(
+        item.properties.center[0],
+        item.properties.center[1]
+      );
+      console.log("singleMergeMesh", singleMergeMesh);
+      MeshGroup.add(singleMergeMesh);
       // 2.地名文字
       let xy = lon2xy(item.properties.centroid[0], item.properties.centroid[1]); //每个网格体自带的中心点数据
       let pos = new THREE.Vector3(xy.x, xy.y, 360000);
@@ -75,13 +117,16 @@ function countryMesh() {
         lineGroup.add(lineMesh);
       });
     });
+
+    // exportGLTF(MeshGroup.children[0]);
   });
+  //导出gltf
 }
 //省级
 const provinceMeshgroup = new THREE.Group(); //模型组
 const provinceLinegroup = new THREE.Group(); //线框组
 function provinceMesh(name) {
-  console.log("name", name);
+  // console.log("name", name);
   loaderfile.load(`/BaseModel/${name}.json`, async (data) => {
     data.features.forEach((item) => {
       if (item.geometry.type === "Polygon") {

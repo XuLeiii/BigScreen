@@ -92,6 +92,7 @@
 
 <script>
 import gsap from "gsap";
+import { camera, controls, restrictOp } from "@/BaseModel/RenderCamera";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import { renderer } from "@/BaseModel/RenderLoop";
 import { labelRenderer } from "@/BaseModel/utils/tags";
@@ -103,7 +104,6 @@ import {
 } from "@/BaseModel/utils/generateFont";
 // eslint-disable-next-line no-unused-vars
 import { choose, chooseMesh, cityCenter } from "@/BaseModel/utils/choose.js";
-import { camera, controls, restrictOp } from "@/BaseModel/RenderCamera";
 import {
   MeshGroup,
   lineGroup,
@@ -217,7 +217,10 @@ export default {
             restrictOp(!this.isRestrict, self.MapLevel); //启用角度缩放限制
             //调整相机位置与目标点位置
             self.cameraPosition();
+            console.log("scene-province", scene);
+            console.log("province-meshgroup", MeshGroup);
             //绑定省级地图的单击监听事件，拾取网格体。
+
             window.onclick = (e) => {
               self.chooseMeshName = choose(e, provinceMeshgroup, self.MapLevel);
               self.currentData1 = self.currentData.children.find((val) => {
@@ -255,6 +258,8 @@ export default {
           duration: 1,
           ease: "none",
           onComplete: () => {
+            console.log("city-meshgroup", MeshGroup);
+
             tween1.kill();
             tween1 = null;
             self.clearProvince(); //清空省级网格体
@@ -336,6 +341,7 @@ export default {
         }
       });
       scene.remove(MeshGroup);
+      // MeshGroup = null;
       //清空线框
       lineGroup.traverse((item) => {
         if (item.type === "Mesh") {
@@ -445,6 +451,7 @@ export default {
   },
   mounted() {
     const self = this;
+    console.log("scene-mounted", scene);
     const myVideo = this.$refs.myVideo;
     this.initCanvas(); //初始化Canvas画布
     //监听开场动画结束
