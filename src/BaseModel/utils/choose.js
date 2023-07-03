@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { camera } from "../RenderCamera.js";
 import { scene } from "../scene/index.js";
 import { listTags, arrowTags } from "./tags.js";
-
+import { xy2lon } from "./math.js";
 let labelArry = []; //标签数组
 let arrowArry = []; //箭头数组
 let chooseMesh = 0;
@@ -24,7 +24,6 @@ function choose(event, mesh, level) {
     }
     arrowArry[0].visible = false;
   }
-  // console.log("调用了choose");
   //1.获取当前鼠标的坐标
   let Sx = event.clientX;
   let Sy = event.clientY;
@@ -41,15 +40,12 @@ function choose(event, mesh, level) {
   if (intersetc.length > 0) {
     //1.取出被选中的模型
     chooseMesh = intersetc[0].object;
-    console.log("chooseMesh ", chooseMesh.userData.name, chooseMesh);
     //射线与网格的交点坐标
     chooseMesh.material[0].color.set(0x0054ef);
     // chooseMesh.material[1].color.set(0x0054ef);
     const label = listTags(level); //设备信息标签
     const arrowLabel = arrowTags(level); //箭头图片
     //几何体中心坐标确定标签的位置
-    // let x = chooseMesh.geometry.boundingSphere.center.x;
-    // let y = chooseMesh.geometry.boundingSphere.center.y;
     let x = chooseMesh.userData.center.x;
     let y = chooseMesh.userData.center.y;
     let pos = new THREE.Vector3(x, y, 220000);
@@ -68,43 +64,8 @@ function choose(event, mesh, level) {
     labelArry.push(label);
     arrowArry.push(arrowLabel);
     scene.add(label);
-    //内蒙古
-    if (x === 12425557.5) {
-      arrowLabel.position.copy(pos.set(x - 200000, y - 700000, 230000));
-      label.position.copy(pos.set(x + 250000, y - 700000, 220000));
-    }
-    //甘肃
-    if (x === 11190477.5) {
-      // arrowLabel.position.copy(pos.set(x - 200000, y - 700000, 230000));
-      arrowLabel.position.copy(pos.set(x - 500000, y + 400000, 230000));
-      label.position.copy(pos.set(x - 80000, y + 450000, 220000));
-    }
-    //陕西
-    if (x === 12063872) {
-      arrowLabel.position.copy(pos.set(x + 150000, y, 230000));
-      label.position.copy(pos.set(x + 550000, y, 220000));
-    }
-    //江苏 13265869
-    if (x === 13265869) {
-      arrowLabel.position.copy(pos.set(x + 100000, y, 230000));
-      label.position.copy(pos.set(x + 500000, y + 10000, 220000));
-    }
-    //辽宁 13616447
-    if (x === 13616447) {
-      arrowLabel.position.copy(pos.set(x + 100000, y, 230000));
-      label.position.copy(pos.set(x + 500000, y + 10000, 220000));
-    }
-    //河北
-    if (x === 12987491) {
-      arrowLabel.position.copy(pos.set(x - 100000, y - 100000, 230000));
-      label.position.copy(pos.set(x + 300000, y, 220000));
-    }
-    cityCenter = chooseMesh.userData.center;
-    // console.log("cityCenter", cityCenter);
-    //边缘高光、、、、、、、、、、、、、
-    // let a = selectEmissive(chooseMesh);
-    // composer.addPass(a);
-    // console.log("chooseMesh.userData.name", chooseMesh.userData.name);
+    const lon = xy2lon(x, y);
+    cityCenter = lon;
     return chooseMesh.userData.name;
   } else {
     chooseMesh = 0;

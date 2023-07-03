@@ -9,7 +9,6 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 camera.position.set(11610512.75, 1071117.8125, 270000000);
-// camera.position.set(0,0, 0);
 //2.渲染器
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -18,16 +17,14 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-// renderer.setClearColor(0xb9d3ff, 1);
-// const composer = new EffectComposer(renderer);
-// composer.addPass(new RenderPass(scene, camera));
-// renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.setPixelRatio(window.devicePixelRatio);
+
 //3.轨道控制器
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(11610512.75, 4571117.8125, 0);
 
-// controls.enablePan = false;//禁用鼠标右键
+controls.enablePan = false; //禁用鼠标右键
 //视角操作限制
 //bol：是否启用限制
 //level:地图层级
@@ -41,21 +38,17 @@ function restrictOp(bol, level) {
     controls.maxPolarAngle = (Math.PI / 6) * 4;
     //缩放距离限制
     if (level === 1) {
-      console.log("国级限制");
       controls.minDistance = 250000000;
       controls.maxDistance = 600000000;
     } else if (level === 2) {
-      console.log("省级限制");
       controls.minDistance = 10000000;
       controls.maxDistance = 100000000;
     } else {
-      console.log("市级限制");
       controls.minDistance = 8000000;
       controls.maxDistance = 80000000;
       return;
     }
   } else {
-    console.log("禁止限制");
     controls.minDistance = 0;
     controls.maxDistance = Infinity;
   }

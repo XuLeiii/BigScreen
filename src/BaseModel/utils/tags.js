@@ -16,6 +16,7 @@ function listTags(level) {
   if (level === 1) {
     label.scale.set(5500, 5500, 5500);
   } else if (level === 2) {
+    console.log(level);
     label.scale.set(1000, 1000, 1000);
   } else {
     label.scale.set(500, 500, 500);
@@ -40,6 +41,7 @@ function arrowTags(level) {
 //2.创建CSS2D渲染器,想象为一个画布
 let labelRenderer = new CSS3DRenderer();
 labelRenderer.setSize(window.innerWidth, window.innerHeight);
+
 labelRenderer.domElement.style.position = "absolute";
 labelRenderer.domElement.style.pointerEvents = "none";
 

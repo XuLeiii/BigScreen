@@ -3,6 +3,26 @@ import * as THREE from "three";
 //shapeGeometry:每个网格体对象，用来获取网格体的位置，和设置其uv数据。
 //meshGroup：网格体数组，用来计算网格体组的长宽高。
 function generateMap(shapeGeometry) {
+  const upMaterial = new THREE.MeshLambertMaterial({
+    // wireframe: true,
+    color: 0x00a2ff,
+    // map: texture,
+    opacity: 1,
+    transparent: true,
+    // side: THREE.DoubleSide,
+  });
+  const sideMaterial = new THREE.MeshLambertMaterial({
+    wireframe: true,
+    color: 0x00a2ff,
+    opacity: 1,
+    transparent: true,
+    // side: THREE.DoubleSide,
+  });
+  const shapeMesh = new THREE.Mesh(shapeGeometry, [upMaterial, sideMaterial]);
+  return shapeMesh;
+}
+
+function generateTexture(shapeGeometry, material) {
   //需要参数网格体的位置和名称，包围盒的宽高最大最小值。
   let pos = shapeGeometry.attributes.position; //传入网格体的位置属性
   let count = pos.count;
@@ -26,23 +46,8 @@ function generateMap(shapeGeometry) {
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(1.7, 0.9);
   texture.offset.set(0.999, 1);
-  const upMaterial = new THREE.MeshLambertMaterial({
-    // wireframe: true,
-    color: 0x00a2ff,
-    map: texture,
-    opacity: 1,
-    transparent: true,
-    side: THREE.DoubleSide,
-  });
-  const sideMaterial = new THREE.MeshLambertMaterial({
-    // wireframe: true,
-    color: 0x00a2ff,
-    opacity: 1,
-    transparent: true,
-    side: THREE.DoubleSide,
-  });
-  const shapeMesh = new THREE.Mesh(shapeGeometry, [upMaterial, sideMaterial]);
-  return shapeMesh;
+  const singleMergeMesh = new THREE.Mesh(shapeGeometry, material);
+  singleMergeMesh.material[0].map = texture;
+  return singleMergeMesh;
 }
-
-export { generateMap };
+export { generateMap, generateTexture };

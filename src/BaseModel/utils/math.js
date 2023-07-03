@@ -16,4 +16,16 @@ function lon2xy(longitude, latitude) {
     y: y, //墨卡托y坐标——对应维度
   };
 }
-export { lon2xy };
+// 墨卡托转经纬度
+function xy2lon(x, y) {
+  var E = (x / 20037508.34) * 180;
+  var N = (y / 20037508.34) * 180;
+  N =
+    (180 / Math.PI) *
+    (2 * Math.atan(Math.exp((N * Math.PI) / 180)) - Math.PI / 2);
+  return {
+    longitude: E, // 经度
+    latitude: N, // 纬度
+  };
+}
+export { lon2xy, xy2lon };

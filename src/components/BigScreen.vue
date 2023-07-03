@@ -74,7 +74,7 @@
         z-index: -10;
       "
     ></div>
-    <button
+    <!-- <button
       @click="goBack()"
       style="
         position: absolute;
@@ -86,7 +86,7 @@
       "
     >
       返回上一级
-    </button>
+    </button> -->
   </div>
 </template>
 
@@ -127,10 +127,46 @@ export default {
       currentData: {}, //当前省份的数据
       currentData1: {}, //当前市级的数据
       currentData2: {}, //当前区县的数据
+      geodata: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              type: 0,
+              ratio: 0.0369,
+              lineWidthRatio: 1,
+            },
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [115.482331, 38.867657],
+                [85.7970604, 38.8346096],
+                // [108.6905470,25.7015323]
+              ],
+            },
+          },
+          {
+            type: "Feature",
+            properties: {
+              type: 1,
+              ratio: 0.035,
+              lineWidthRatio: 0.5,
+            },
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [85.7970604, 38.8346096],
+                [108.690547, 25.7015323],
+              ],
+            },
+          },
+        ],
+      },
     };
   },
   methods: {
-    //判断层级并返回对应层级的数据
+    //判断层级并返回对应层级的数据信息
     Level() {
       if (this.MapLevel === 1) {
         return this.currentData;
@@ -141,8 +177,7 @@ export default {
       }
     },
     // 模拟接收xxx
-    recive(data) {
-      console.log(data);
+    reciveData(data) {
       this.provinceData = data;
     },
     //初始化高德地图
@@ -151,15 +186,75 @@ export default {
         key: "d1bd5fd8efed0733ce7a296af76eb4c8", // 申请好的Web端开发者Key，首次调用 load 时必填
         version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
         plugins: [""], // 需要使用的的插件列表，如比例尺'AMap.Scale'等
+        Loca: {
+          version: "2.0.0",
+        },
       })
         .then((AMap) => {
-          this.map = new AMap.Map("Amap", {
+          /* eslint-disable */
+          let map = new AMap.Map("Amap", {
             //设置地图容器id
-            mapStyle: "amap://styles/darkblue", //设置地图的显示样式
+            mapStyle: "amap://styles/blue", //设置地图的显示样式
             viewMode: "3D", //是否为3D地图模式
-            zoom: 11, //初始化地图级别
-            center: [cityCenter[0], cityCenter[1]], //初始化地图中心点位置
+            zoom: 18, //初始化地图级别
+            pitch: 80, // 地图倾斜
+            center: [cityCenter.longitude, cityCenter.latitude], //初始化地图中心点位置
           });
+          let loca = new window.Loca.Container({
+            map: map,
+          });
+
+          // 弧线
+          var pulseLink = new window.Loca.PulseLinkLayer({
+            // loca,
+            zIndex: 10,
+            opacity: 1,
+            visible: true,
+            zooms: [2, 22],
+            depth: true,
+          });
+
+          // var geo = new window.Loca.GeoJSONSource({
+          //   url: "https://a.amap.com/Loca/static/loca-v2/demos/mock_data/data-line-out.json",
+          // });
+          // [117.2724232, 31.8571347],
+          // [115.8743238, 32.8744899],
+          var geo = new window.Loca.GeoJSONSource({
+            data: this.geodata,
+          });
+
+          pulseLink.setSource(geo);
+          pulseLink.setStyle({
+            unit: "meter",
+            // dash: [40000, ],
+            lineWidth: function () {
+              return [20000, 20000];
+            },
+            height: function (index, feat) {
+              return feat.distance / 3 + 10;
+            },
+            // altitude: 1000,
+            smoothSteps: 30,
+            speed: function (index, prop) {
+              return 1000 + Math.random() * 200000;
+            },
+            flowLength: 50000,
+            lineColors: function (index, feat) {
+              return [
+                "rgb(255,228,105)",
+                "rgb(255,164,105)",
+                "rgba(1, 34, 249,1)",
+              ];
+            },
+            maxHeightScale: 0.3, // 弧顶位置比例
+            headColor: "rgba(255, 255, 0, 1)",
+            trailColor: "rgba(255, 255,0,0)",
+          });
+          loca.add(pulseLink);
+          loca.animate.start();
+
+          var dat = new window.Loca.Dat();
+          dat.addLayer(pulseLink);
         })
         .catch((e) => {
           console.log(e);
@@ -191,7 +286,6 @@ export default {
     },
     //中国地图跳转省级
     switchProvince() {
-      console.log(3);
       const self = this;
       document.getElementById("arrow").style.visibility = "hidden"; //隐藏箭头
       document.getElementById("hello").style.visibility = "hidden"; //隐藏设备标签
@@ -199,7 +293,6 @@ export default {
         self.MapLevel = 2; //修改地图层级
         window.onclick = null; //移除中国地图单击事件
         window.ondblclick = null; //移除中国地图双击事件
-        console.log("chooseMesh", chooseMesh);
         //相机拉近
         let tween1 = gsap.to([camera.position, this.canvasDom.style], {
           z: 250000000,
@@ -217,8 +310,6 @@ export default {
             restrictOp(!this.isRestrict, self.MapLevel); //启用角度缩放限制
             //调整相机位置与目标点位置
             self.cameraPosition();
-            console.log("scene-province", scene);
-            console.log("province-meshgroup", MeshGroup);
             //绑定省级地图的单击监听事件，拾取网格体。
 
             window.onclick = (e) => {
@@ -258,8 +349,6 @@ export default {
           duration: 1,
           ease: "none",
           onComplete: () => {
-            console.log("city-meshgroup", MeshGroup);
-
             tween1.kill();
             tween1 = null;
             self.clearProvince(); //清空省级网格体
@@ -283,10 +372,8 @@ export default {
             //绑定市级地图双击事件
             window.ondblclick = () => {
               if (!self.currentData2) {
-                console.log(1);
                 return;
               } else {
-                console.log(2);
                 self.switchArea();
               }
             };
@@ -331,13 +418,12 @@ export default {
     },
     //清空中国网格体、字体
     clearChina() {
-      console.log("clear1111111111");
       //清空网格体组(未清除dom标签)
       MeshGroup.traverse((item) => {
         if (item.type === "Mesh") {
           item.geometry.dispose();
           item.material[0].dispose();
-          item.material[1].dispose();
+          // item.material[1].dispose();
         }
       });
       scene.remove(MeshGroup);
@@ -366,12 +452,11 @@ export default {
     },
     //清空省级网格体、字体
     clearProvince() {
-      console.log("清空省级？？？");
       provinceMeshgroup.traverse((item) => {
         if (item.type === "Mesh") {
           item.geometry.dispose();
           item.material[0].dispose();
-          item.material[1].dispose();
+          // item.material[1].dispose();
         }
       });
       scene.remove(provinceMeshgroup);
@@ -403,7 +488,7 @@ export default {
         if (item.type === "Mesh") {
           item.geometry.dispose();
           item.material[0].dispose();
-          item.material[1].dispose();
+          // item.material[1].dispose();
         }
       });
       scene.remove(cityMeshgroup);
@@ -451,7 +536,6 @@ export default {
   },
   mounted() {
     const self = this;
-    console.log("scene-mounted", scene);
     const myVideo = this.$refs.myVideo;
     this.initCanvas(); //初始化Canvas画布
     //监听开场动画结束
@@ -463,7 +547,7 @@ export default {
         onComplete: function () {
           tween1.kill();
           tween1 = null;
-          countryMesh(); //生成中国地图
+          countryMesh("中国"); //生成中国地图
           renderer.domElement.style.zIndex = 1;
           myVideo.parentNode.removeChild(myVideo); //移除video节点
           //单击显示省会设备标签
@@ -479,10 +563,8 @@ export default {
           //双击跳转省会界面立体图
           window.ondblclick = () => {
             if (!self.currentData) {
-              console.log(1);
               return;
             } else {
-              console.log(2);
               self.switchProvince();
             }
           };
@@ -501,7 +583,6 @@ export default {
               tween2.kill();
               tween2 = null;
               restrictOp(this.isRestrict, self.MapLevel); //启用角度缩放限制
-              console.log(camera.position);
             },
           });
         },
@@ -663,7 +744,52 @@ export default {
         ],
       },
     ];
-    this.recive(mockData);
+    this.reciveData(mockData);
+
+    window.HOME = {
+      reciveData: this.reciveData,
+    };
+    // 1.接收设备数据
+    // reciveData(data)
+    //data:Array
+    //name:String
+    //a,b,c,d:Number
+    //children:Array
+    //2.参考数据
+    // data: [
+    //   {
+    //     name: "xx省",
+    //     a: 22,
+    //     b: 33,
+    //     c: 44,
+    //     d: 55,
+    //     children: [
+    //       {
+    //         name: "xx市",
+    //         a: 22,
+    //         b: 33,
+    //         c: 44,
+    //         d: 55,
+    //         children: [
+    //           {
+    //             name: "xx区",
+    //             a: 22,
+    //             b: 33,
+    //             c: 44,
+    //             d: 55,
+    //             deviceName: [
+    //               {
+    //                 name: "设备a",
+    //                 position: [30.0, 36.0],
+    //               },
+    //             ],
+    //           },
+    //         ],
+    //       },
+    //     ],
+    //   },
+    // ];
+    // window.window_external.JS_funtionName('111')客户端调用网页
   },
 };
 </script>

@@ -12,7 +12,7 @@ let fontGroup = new THREE.Group();
  */
 function generateFont(fontContent, fontPosition) {
   const textLoader = new FontLoader();
-  textLoader.load("/Fonts/DengXian_Bold_mini.json", function (font) {
+  textLoader.load("/Fonts/DengXian_Bold_name.json", function (font) {
     let text = new TextGeometry(fontContent, {
       font: font,
       size: 100000,
@@ -37,7 +37,7 @@ function generateFont(fontContent, fontPosition) {
 
 function generateProvinceFont(fontContent, fontPosition) {
   const textLoader = new FontLoader();
-  textLoader.load("/Fonts/DengXian_Bold_mini.json", function (font) {
+  textLoader.load("/Fonts/DengXian_Bold_name.json", function (font) {
     let text = new TextGeometry(fontContent, {
       font: font,
       size: 15000,
@@ -60,7 +60,7 @@ function generateProvinceFont(fontContent, fontPosition) {
 
 function generateCityFont(fontContent, fontPosition) {
   const textLoader = new FontLoader();
-  textLoader.load("/Fonts/DengXian_Bold_mini.json", function (font) {
+  textLoader.load("/Fonts/DengXian_Bold_name.json", function (font) {
     let text = new TextGeometry(fontContent, {
       font: font,
       size: 4000,

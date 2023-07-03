@@ -11,7 +11,6 @@ import { lineGroup, MeshGroup } from "./mesh.js";
 const scene = new THREE.Scene();
 
 //2.灯光
-
 const lightTarget = new THREE.Object3D();
 lightTarget.position.set(11610512.75, 4571117.8125, 0); // 设置目标位置
 scene.add(lightTarget);
@@ -48,10 +47,6 @@ scene.add(
 // const axies = new THREE.AxesHelper(300000000, 300000000, 300000000);
 // scene.add(axies);
 
-console.log("MeshGroup", MeshGroup);
-//4.添加网格体s
-
-scene.add(lineGroup, MeshGroup, provinceFontGroup, cityFontGroup);
-// scene.add(chinaFace);
-scene.add(fontGroup);
+//4.添加网格体
+scene.add(lineGroup, MeshGroup, provinceFontGroup, cityFontGroup, fontGroup);
 export { scene };
